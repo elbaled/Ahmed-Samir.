@@ -1,6 +1,7 @@
 /* =========================================================
    SAMIR PORTFOLIO - MAIN WEBSITE
-   Firebase Projects + Theme + Navigation
+   Firebase Projects + Certificates
+   Theme + Navigation + Filters
    ========================================================= */
 
 "use strict";
@@ -36,6 +37,9 @@ const themeToggle =
 
 const projectsGrid =
     document.querySelector(".projects-grid");
+
+const certificatesGrid =
+    document.querySelector(".certificates-grid");
 
 const filterButtons =
     document.querySelectorAll(".filter-btn");
@@ -105,10 +109,6 @@ if (menuToggle && navLinks) {
 }
 
 
-/* =========================================================
-   CLOSE MOBILE MENU
-   ========================================================= */
-
 document
     .querySelectorAll(".nav-links a")
     .forEach((link) => {
@@ -155,6 +155,7 @@ function updateThemeIcon() {
     if (!themeToggle) {
         return;
     }
+
 
     const isLight =
         document.body.classList.contains(
@@ -207,8 +208,11 @@ if (themeToggle) {
 
 
 /* =========================================================
-   PROJECT CATEGORY NAMES
+   PROJECTS
    ========================================================= */
+
+let allProjects = [];
+
 
 const categoryNames = {
 
@@ -226,17 +230,6 @@ const categoryNames = {
 
 };
 
-
-/* =========================================================
-   PROJECT DATA
-   ========================================================= */
-
-let allProjects = [];
-
-
-/* =========================================================
-   LOAD PROJECTS FROM FIRESTORE
-   ========================================================= */
 
 async function loadProjects() {
 
@@ -290,31 +283,19 @@ async function loadProjects() {
         );
 
 
-        /* =================================================
-           SORT
-           ================================================= */
-
         allProjects.sort(
             (a, b) => {
 
-                const aTime =
-                    a.createdAt?.seconds ||
-                    0;
-
-                const bTime =
-                    b.createdAt?.seconds ||
-                    0;
-
-
-                return bTime - aTime;
+                return (
+                    (b.createdAt?.seconds || 0) -
+                    (a.createdAt?.seconds || 0)
+                );
 
             }
         );
 
 
-        renderProjects(
-            "all"
-        );
+        renderProjects("all");
 
 
     } catch (error) {
@@ -349,10 +330,6 @@ async function loadProjects() {
 
 }
 
-
-/* =========================================================
-   RENDER PROJECTS
-   ========================================================= */
 
 function renderProjects(
     selectedCategory = "all"
@@ -428,10 +405,6 @@ function renderProjects(
 }
 
 
-/* =========================================================
-   CREATE PROJECT CARD
-   ========================================================= */
-
 function createProjectCard(
     project
 ) {
@@ -476,64 +449,52 @@ function createProjectCard(
         "";
 
 
-    let imageHTML;
+    const imageHTML =
+        imageUrl
+            ? `
+                <img
+                    src="${escapeHTML(
+                        imageUrl
+                    )}"
+                    alt="${escapeHTML(
+                        title
+                    )}"
+                    loading="lazy"
+                >
+            `
+            : `
+                <div
+                    class="project-image-placeholder"
+                >
+                    📁
+                </div>
+            `;
 
 
-    if (imageUrl) {
-
-        imageHTML = `
-
-            <img
-                src="${escapeHTML(imageUrl)}"
-                alt="${escapeHTML(title)}"
-                loading="lazy"
-                onerror="this.parentElement.innerHTML='<div class=&quot;project-image-placeholder&quot;>📁</div>';"
-            >
-
-        `;
-
-    } else {
-
-        imageHTML = `
-
-            <div
-                class="project-image-placeholder"
-            >
-                📁
-            </div>
-
-        `;
-
-    }
-
-
-    let linkHTML = "";
-
-
-    if (projectLink) {
-
-        linkHTML = `
-
-            <a
-                href="${escapeHTML(projectLink)}"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="project-link"
-            >
-                View Project
-                ↗
-            </a>
-
-        `;
-
-    }
+    const linkHTML =
+        projectLink
+            ? `
+                <a
+                    href="${escapeHTML(
+                        projectLink
+                    )}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="project-link"
+                >
+                    View Project ↗
+                </a>
+            `
+            : "";
 
 
     return `
 
         <article
             class="project-card"
-            data-category="${escapeHTML(category)}"
+            data-category="${escapeHTML(
+                category
+            )}"
         >
 
             <div class="project-image">
@@ -547,50 +508,43 @@ function createProjectCard(
 
                 <div class="project-meta">
 
-                    <span class="project-category">
-
+                    <span
+                        class="project-category"
+                    >
                         ${escapeHTML(
                             categoryName
                         )}
-
                     </span>
 
 
                     <span
                         class="project-status"
                     >
-
                         ${escapeHTML(
                             status
                         )}
-
                     </span>
 
                 </div>
 
 
                 <h3>
-
                     ${escapeHTML(
                         title
                     )}
-
                 </h3>
 
 
                 <p>
-
                     ${escapeHTML(
                         description
                     )}
-
                 </p>
 
 
                 ${
                     tools
                         ? `
-
                             <div
                                 class="project-tools"
                             >
@@ -604,7 +558,6 @@ function createProjectCard(
                                 )}
 
                             </div>
-
                         `
                         : ""
                 }
@@ -613,7 +566,6 @@ function createProjectCard(
                 ${
                     linkHTML
                         ? `
-
                             <div
                                 class="project-actions"
                             >
@@ -621,7 +573,6 @@ function createProjectCard(
                                 ${linkHTML}
 
                             </div>
-
                         `
                         : ""
                 }
@@ -679,7 +630,315 @@ filterButtons.forEach(
 
 
 /* =========================================================
-   SCROLL HEADER
+   CERTIFICATES
+   ========================================================= */
+
+async function loadCertificates() {
+
+    if (!certificatesGrid) {
+        return;
+    }
+
+
+    certificatesGrid.innerHTML = `
+
+        <div class="certificates-loading">
+
+            <div class="loading-spinner"></div>
+
+            <p>
+                Loading certificates...
+            </p>
+
+        </div>
+
+    `;
+
+
+    try {
+
+        const snapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "certificates"
+                )
+            );
+
+
+        const certificates = [];
+
+
+        snapshot.forEach(
+            (documentSnapshot) => {
+
+                certificates.push({
+
+                    id:
+                        documentSnapshot.id,
+
+                    ...documentSnapshot.data()
+
+                });
+
+            }
+        );
+
+
+        certificates.sort(
+            (a, b) => {
+
+                return (
+                    (b.createdAt?.seconds || 0) -
+                    (a.createdAt?.seconds || 0)
+                );
+
+            }
+        );
+
+
+        if (
+            certificates.length ===
+            0
+        ) {
+
+            certificatesGrid.innerHTML = `
+
+                <div class="certificates-empty">
+
+                    <div class="empty-icon">
+                        🎓
+                    </div>
+
+                    <h3>
+                        Certificates Coming Soon
+                    </h3>
+
+                    <p>
+                        My certificates will appear here.
+                    </p>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        certificatesGrid.innerHTML =
+            certificates
+                .map(
+                    createCertificateCard
+                )
+                .join("");
+
+
+    } catch (error) {
+
+        console.error(
+            "Certificates loading error:",
+            error
+        );
+
+
+        certificatesGrid.innerHTML = `
+
+            <div class="certificates-error">
+
+                <div class="error-icon">
+                    ⚠️
+                </div>
+
+                <h3>
+                    Unable to load certificates
+                </h3>
+
+                <p>
+                    Please try again later.
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+function createCertificateCard(
+    certificate
+) {
+
+    const title =
+        certificate.title ||
+        "Certificate";
+
+
+    const issuer =
+        certificate.issuer ||
+        "";
+
+
+    const date =
+        certificate.date ||
+        "";
+
+
+    const description =
+        certificate.description ||
+        "";
+
+
+    const imageUrl =
+        certificate.imageUrl ||
+        "";
+
+
+    const certificateUrl =
+        certificate.certificateUrl ||
+        "";
+
+
+    const imageHTML =
+        imageUrl
+            ? `
+                <img
+                    src="${escapeHTML(
+                        imageUrl
+                    )}"
+                    alt="${escapeHTML(
+                        title
+                    )}"
+                    loading="lazy"
+                >
+            `
+            : `
+                <div
+                    class="certificate-image-placeholder"
+                >
+                    🎓
+                </div>
+            `;
+
+
+    const linkHTML =
+        certificateUrl
+            ? `
+                <a
+                    href="${escapeHTML(
+                        certificateUrl
+                    )}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="certificate-link"
+                >
+                    View Certificate ↗
+                </a>
+            `
+            : "";
+
+
+    return `
+
+        <article
+            class="certificate-card"
+        >
+
+            <div
+                class="certificate-image"
+            >
+
+                ${imageHTML}
+
+            </div>
+
+
+            <div
+                class="certificate-content"
+            >
+
+                <h3>
+                    ${escapeHTML(
+                        title
+                    )}
+                </h3>
+
+
+                ${
+                    issuer
+                        ? `
+                            <div
+                                class="certificate-issuer"
+                            >
+
+                                ${escapeHTML(
+                                    issuer
+                                )}
+
+                            </div>
+                        `
+                        : ""
+                }
+
+
+                ${
+                    date
+                        ? `
+                            <div
+                                class="certificate-date"
+                            >
+
+                                ${escapeHTML(
+                                    date
+                                )}
+
+                            </div>
+                        `
+                        : ""
+                }
+
+
+                ${
+                    description
+                        ? `
+                            <p>
+                                ${escapeHTML(
+                                    description
+                                )}
+                            </p>
+                        `
+                        : ""
+                }
+
+
+                ${
+                    linkHTML
+                        ? `
+                            <div
+                                class="certificate-actions"
+                            >
+
+                                ${linkHTML}
+
+                            </div>
+                        `
+                        : ""
+                }
+
+            </div>
+
+        </article>
+
+    `;
+
+}
+
+
+/* =========================================================
+   HEADER SCROLL
    ========================================================= */
 
 const header =
@@ -892,6 +1151,8 @@ document.addEventListener(
    ========================================================= */
 
 loadProjects();
+
+loadCertificates();
 
 
 /* =========================================================
