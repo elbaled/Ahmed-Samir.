@@ -1,9 +1,10 @@
 /* =========================================================
    SAMIR PORTFOLIO - ADMIN DASHBOARD
-   Projects CRUD + Authentication
+   Projects + Certificates + Authentication
    ========================================================= */
 
 "use strict";
+
 
 /* =========================================================
    FIREBASE
@@ -28,236 +29,103 @@ import {
 
 
 /* =========================================================
-   ADMIN CONFIG
+   CONFIG
    ========================================================= */
 
-const ADMIN_UID = "Sszp0JmpjcQhpsg78kqh5VS8row1";
+const ADMIN_UID =
+    "Sszp0JmpjcQhpsg78kqh5VS8row1";
 
-const PROJECTS_COLLECTION = "projects";
+const PROJECTS_COLLECTION =
+    "projects";
+
+const CERTIFICATES_COLLECTION =
+    "certificates";
 
 
 /* =========================================================
-   DOM ELEMENTS
+   DOM
    ========================================================= */
 
-const sidebar = document.getElementById("sidebar");
-const menuToggle = document.getElementById("menuToggle");
-const sidebarClose = document.getElementById("sidebarClose");
+const sidebar =
+    document.getElementById("sidebar");
 
-const navItems = document.querySelectorAll(".nav-item");
+const menuToggle =
+    document.getElementById("menuToggle");
 
-const sections = document.querySelectorAll(".admin-section");
+const sidebarClose =
+    document.getElementById("sidebarClose");
 
-const viewWebsiteBtn = document.getElementById("viewWebsiteBtn");
-const logoutBtn = document.getElementById("logoutBtn");
+const navItems =
+    document.querySelectorAll(".nav-item");
 
-const addProjectBtn = document.getElementById("addProjectBtn");
-const addCertificateBtn = document.getElementById("addCertificateBtn");
-const addCourseBtn = document.getElementById("addCourseBtn");
-const addSkillBtn = document.getElementById("addSkillBtn");
+const sections =
+    document.querySelectorAll(".admin-section");
 
-const modal = document.getElementById("adminModal");
-const modalOverlay = document.getElementById("modalOverlay");
-const modalClose = document.getElementById("modalClose");
-const modalTitle = document.getElementById("modalTitle");
-const modalBody = document.getElementById("modalBody");
+const viewWebsiteBtn =
+    document.getElementById("viewWebsiteBtn");
 
-const projectsContainer = document.getElementById("projectsContainer");
+const logoutBtn =
+    document.getElementById("logoutBtn");
 
-const projectsCount = document.getElementById("projectsCount");
-const certificatesCount = document.getElementById("certificatesCount");
-const coursesCount = document.getElementById("coursesCount");
-const skillsCount = document.getElementById("skillsCount");
+const addProjectBtn =
+    document.getElementById("addProjectBtn");
 
-const currentYear = document.getElementById("currentYear");
+const addCertificateBtn =
+    document.getElementById("addCertificateBtn");
+
+const addCourseBtn =
+    document.getElementById("addCourseBtn");
+
+const addSkillBtn =
+    document.getElementById("addSkillBtn");
+
+const modal =
+    document.getElementById("adminModal");
+
+const modalOverlay =
+    document.getElementById("modalOverlay");
+
+const modalClose =
+    document.getElementById("modalClose");
+
+const modalTitle =
+    document.getElementById("modalTitle");
+
+const modalBody =
+    document.getElementById("modalBody");
+
+const projectsContainer =
+    document.getElementById("projectsContainer");
+
+const certificatesContainer =
+    document.getElementById("certificatesContainer");
+
+const projectsCount =
+    document.getElementById("projectsCount");
+
+const certificatesCount =
+    document.getElementById("certificatesCount");
+
+const coursesCount =
+    document.getElementById("coursesCount");
+
+const skillsCount =
+    document.getElementById("skillsCount");
+
+const currentYear =
+    document.getElementById("currentYear");
 
 
 /* =========================================================
-   CURRENT YEAR
+   YEAR
    ========================================================= */
 
 if (currentYear) {
-    currentYear.textContent = new Date().getFullYear();
-}
 
-
-/* =========================================================
-   MOBILE SIDEBAR
-   ========================================================= */
-
-if (menuToggle) {
-    menuToggle.addEventListener("click", () => {
-        sidebar?.classList.add("active");
-    });
-}
-
-if (sidebarClose) {
-    sidebarClose.addEventListener("click", () => {
-        sidebar?.classList.remove("active");
-    });
-}
-
-
-/* =========================================================
-   CLOSE SIDEBAR WHEN CLICKING NAV
-   ========================================================= */
-
-navItems.forEach((item) => {
-    item.addEventListener("click", () => {
-        sidebar?.classList.remove("active");
-    });
-});
-
-
-/* =========================================================
-   SECTION NAVIGATION
-   ========================================================= */
-
-function showSection(sectionId) {
-
-    sections.forEach((section) => {
-        section.classList.remove("active");
-    });
-
-    navItems.forEach((item) => {
-        item.classList.remove("active");
-    });
-
-    const targetSection = document.getElementById(sectionId);
-
-    if (targetSection) {
-        targetSection.classList.add("active");
-    }
-
-    const activeNav = document.querySelector(
-        `.nav-item[data-section="${sectionId}"]`
-    );
-
-    if (activeNav) {
-        activeNav.classList.add("active");
-    }
-
-    if (sectionId === "projectsSection") {
-        loadProjects();
-    }
-}
-
-
-navItems.forEach((item) => {
-
-    item.addEventListener("click", () => {
-
-        const sectionId = item.dataset.section;
-
-        if (!sectionId) {
-            return;
-        }
-
-        showSection(sectionId);
-
-    });
-
-});
-
-
-/* =========================================================
-   VIEW WEBSITE
-   ========================================================= */
-
-if (viewWebsiteBtn) {
-
-    viewWebsiteBtn.addEventListener("click", () => {
-
-        window.location.href = "index.html";
-
-    });
+    currentYear.textContent =
+        new Date().getFullYear();
 
 }
-
-
-/* =========================================================
-   LOGOUT
-   ========================================================= */
-
-if (logoutBtn) {
-
-    logoutBtn.addEventListener("click", async () => {
-
-        try {
-
-            await signOut(auth);
-
-            window.location.href = "login.html";
-
-        } catch (error) {
-
-            console.error("Logout error:", error);
-
-            alert("حدث خطأ أثناء تسجيل الخروج.");
-
-        }
-
-    });
-
-}
-
-
-/* =========================================================
-   MODAL
-   ========================================================= */
-
-function openModal(title, content) {
-
-    if (!modal) {
-        return;
-    }
-
-    if (modalTitle) {
-        modalTitle.textContent = title;
-    }
-
-    if (modalBody) {
-        modalBody.innerHTML = content;
-    }
-
-    modal.classList.add("active");
-
-    document.body.classList.add("modal-open");
-}
-
-
-function closeModal() {
-
-    if (!modal) {
-        return;
-    }
-
-    modal.classList.remove("active");
-
-    document.body.classList.remove("modal-open");
-
-}
-
-
-if (modalClose) {
-    modalClose.addEventListener("click", closeModal);
-}
-
-
-if (modalOverlay) {
-    modalOverlay.addEventListener("click", closeModal);
-}
-
-
-document.addEventListener("keydown", (event) => {
-
-    if (event.key === "Escape") {
-
-        closeModal();
-
-    }
-
-});
 
 
 /* =========================================================
@@ -266,7 +134,10 @@ document.addEventListener("keydown", (event) => {
 
 function escapeHTML(value) {
 
-    if (value === null || value === undefined) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
         return "";
     }
 
@@ -281,42 +152,380 @@ function escapeHTML(value) {
 
 
 /* =========================================================
+   MOBILE SIDEBAR
+   ========================================================= */
+
+if (menuToggle) {
+
+    menuToggle.addEventListener(
+        "click",
+        () => {
+
+            sidebar?.classList.add(
+                "active"
+            );
+
+        }
+    );
+
+}
+
+
+if (sidebarClose) {
+
+    sidebarClose.addEventListener(
+        "click",
+        () => {
+
+            sidebar?.classList.remove(
+                "active"
+            );
+
+        }
+    );
+
+}
+
+
+navItems.forEach(
+    (item) => {
+
+        item.addEventListener(
+            "click",
+            () => {
+
+                sidebar?.classList.remove(
+                    "active"
+                );
+
+            }
+        );
+
+    }
+);
+
+
+/* =========================================================
+   SECTION NAVIGATION
+   ========================================================= */
+
+function showSection(sectionId) {
+
+    sections.forEach(
+        (section) => {
+
+            section.classList.remove(
+                "active"
+            );
+
+        }
+    );
+
+
+    navItems.forEach(
+        (item) => {
+
+            item.classList.remove(
+                "active"
+            );
+
+        }
+    );
+
+
+    const target =
+        document.getElementById(
+            sectionId
+        );
+
+
+    if (target) {
+
+        target.classList.add(
+            "active"
+        );
+
+    }
+
+
+    const activeNav =
+        document.querySelector(
+            `.nav-item[data-section="${sectionId}"]`
+        );
+
+
+    if (activeNav) {
+
+        activeNav.classList.add(
+            "active"
+        );
+
+    }
+
+
+    if (
+        sectionId ===
+        "projectsSection"
+    ) {
+
+        loadProjects();
+
+    }
+
+
+    if (
+        sectionId ===
+        "certificatesSection"
+    ) {
+
+        loadCertificates();
+
+    }
+
+}
+
+
+navItems.forEach(
+    (item) => {
+
+        item.addEventListener(
+            "click",
+            () => {
+
+                const sectionId =
+                    item.dataset.section;
+
+                if (sectionId) {
+
+                    showSection(
+                        sectionId
+                    );
+
+                }
+
+            }
+        );
+
+    }
+);
+
+
+/* =========================================================
+   VIEW WEBSITE
+   ========================================================= */
+
+if (viewWebsiteBtn) {
+
+    viewWebsiteBtn.addEventListener(
+        "click",
+        () => {
+
+            window.location.href =
+                "index.html";
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+if (logoutBtn) {
+
+    logoutBtn.addEventListener(
+        "click",
+        async () => {
+
+            try {
+
+                await signOut(auth);
+
+                window.location.href =
+                    "login.html";
+
+            } catch (error) {
+
+                console.error(
+                    "Logout error:",
+                    error
+                );
+
+                alert(
+                    "حدث خطأ أثناء تسجيل الخروج."
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   MODAL
+   ========================================================= */
+
+function openModal(
+    title,
+    content
+) {
+
+    if (!modal) {
+        return;
+    }
+
+
+    if (modalTitle) {
+
+        modalTitle.textContent =
+            title;
+
+    }
+
+
+    if (modalBody) {
+
+        modalBody.innerHTML =
+            content;
+
+    }
+
+
+    modal.classList.add(
+        "active"
+    );
+
+
+    document.body.classList.add(
+        "modal-open"
+    );
+
+}
+
+
+function closeModal() {
+
+    if (!modal) {
+        return;
+    }
+
+
+    modal.classList.remove(
+        "active"
+    );
+
+
+    document.body.classList.remove(
+        "modal-open"
+    );
+
+}
+
+
+if (modalClose) {
+
+    modalClose.addEventListener(
+        "click",
+        closeModal
+    );
+
+}
+
+
+if (modalOverlay) {
+
+    modalOverlay.addEventListener(
+        "click",
+        closeModal
+    );
+
+}
+
+
+document.addEventListener(
+    "keydown",
+    (event) => {
+
+        if (
+            event.key ===
+            "Escape"
+        ) {
+
+            closeModal();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
    PROJECT FORM
    ========================================================= */
 
-function getProjectFormHTML(project = null) {
+function getProjectFormHTML(
+    project = null
+) {
 
-    const isEdit = project !== null;
+    const isEdit =
+        project !== null;
 
-    const title = project?.title || "";
-    const category = project?.category || "gis";
-    const description = project?.description || "";
-    const tools = project?.tools || "";
-    const status = project?.status || "Planned";
-    const projectLink = project?.projectLink || "";
-    const imageUrl = project?.imageUrl || "";
+
+    const title =
+        project?.title || "";
+
+    const category =
+        project?.category || "gis";
+
+    const description =
+        project?.description || "";
+
+    const tools =
+        project?.tools || "";
+
+    const status =
+        project?.status || "Planned";
+
+    const projectLink =
+        project?.projectLink || "";
+
+    const imageUrl =
+        project?.imageUrl || "";
+
 
     return `
 
-        <form id="projectForm" class="admin-form">
+        <form
+            id="projectForm"
+            class="admin-form"
+        >
 
             <input
                 type="hidden"
                 id="projectId"
-                value="${escapeHTML(project?.id || "")}"
+                value="${escapeHTML(
+                    project?.id || ""
+                )}"
             >
+
 
             <div class="form-group">
 
-                <label for="projectTitle">
+                <label>
                     Project Title
                 </label>
 
                 <input
                     type="text"
                     id="projectTitle"
-                    placeholder="مثال: GIS Mapping Project"
-                    value="${escapeHTML(title)}"
+                    placeholder="GIS Mapping Project"
+                    value="${escapeHTML(
+                        title
+                    )}"
                     required
                 >
 
@@ -327,25 +536,55 @@ function getProjectFormHTML(project = null) {
 
                 <div class="form-group">
 
-                    <label for="projectCategory">
+                    <label>
                         Category
                     </label>
 
-                    <select id="projectCategory">
+                    <select
+                        id="projectCategory"
+                    >
 
-                        <option value="gis" ${category === "gis" ? "selected" : ""}>
+                        <option
+                            value="gis"
+                            ${
+                                category === "gis"
+                                    ? "selected"
+                                    : ""
+                            }
+                        >
                             GIS
                         </option>
 
-                        <option value="surveying" ${category === "surveying" ? "selected" : ""}>
+                        <option
+                            value="surveying"
+                            ${
+                                category === "surveying"
+                                    ? "selected"
+                                    : ""
+                            }
+                        >
                             Surveying
                         </option>
 
-                        <option value="remote-sensing" ${category === "remote-sensing" ? "selected" : ""}>
+                        <option
+                            value="remote-sensing"
+                            ${
+                                category === "remote-sensing"
+                                    ? "selected"
+                                    : ""
+                            }
+                        >
                             Remote Sensing
                         </option>
 
-                        <option value="programming" ${category === "programming" ? "selected" : ""}>
+                        <option
+                            value="programming"
+                            ${
+                                category === "programming"
+                                    ? "selected"
+                                    : ""
+                            }
+                        >
                             Programming
                         </option>
 
@@ -356,21 +595,44 @@ function getProjectFormHTML(project = null) {
 
                 <div class="form-group">
 
-                    <label for="projectStatus">
+                    <label>
                         Status
                     </label>
 
-                    <select id="projectStatus">
+                    <select
+                        id="projectStatus"
+                    >
 
-                        <option value="Planned" ${status === "Planned" ? "selected" : ""}>
+                        <option
+                            value="Planned"
+                            ${
+                                status === "Planned"
+                                    ? "selected"
+                                    : ""
+                            }
+                        >
                             Planned
                         </option>
 
-                        <option value="In Progress" ${status === "In Progress" ? "selected" : ""}>
+                        <option
+                            value="In Progress"
+                            ${
+                                status === "In Progress"
+                                    ? "selected"
+                                    : ""
+                            }
+                        >
                             In Progress
                         </option>
 
-                        <option value="Completed" ${status === "Completed" ? "selected" : ""}>
+                        <option
+                            value="Completed"
+                            ${
+                                status === "Completed"
+                                    ? "selected"
+                                    : ""
+                            }
+                        >
                             Completed
                         </option>
 
@@ -383,31 +645,34 @@ function getProjectFormHTML(project = null) {
 
             <div class="form-group">
 
-                <label for="projectDescription">
+                <label>
                     Description
                 </label>
 
                 <textarea
                     id="projectDescription"
                     rows="5"
-                    placeholder="اكتب وصف المشروع..."
                     required
-                >${escapeHTML(description)}</textarea>
+                >${escapeHTML(
+                    description
+                )}</textarea>
 
             </div>
 
 
             <div class="form-group">
 
-                <label for="projectTools">
+                <label>
                     Tools / Technologies
                 </label>
 
                 <input
                     type="text"
                     id="projectTools"
-                    placeholder="مثال: ArcGIS Pro, AutoCAD, Python"
-                    value="${escapeHTML(tools)}"
+                    placeholder="ArcGIS Pro, AutoCAD, Python"
+                    value="${escapeHTML(
+                        tools
+                    )}"
                 >
 
             </div>
@@ -415,7 +680,7 @@ function getProjectFormHTML(project = null) {
 
             <div class="form-group">
 
-                <label for="projectImageUrl">
+                <label>
                     Image URL
                 </label>
 
@@ -423,11 +688,13 @@ function getProjectFormHTML(project = null) {
                     type="url"
                     id="projectImageUrl"
                     placeholder="https://..."
-                    value="${escapeHTML(imageUrl)}"
+                    value="${escapeHTML(
+                        imageUrl
+                    )}"
                 >
 
                 <small>
-                    استخدم رابط الصورة من GitHub أو أي استضافة مجانية.
+                    استخدم رابط صورة من GitHub أو استضافة مجانية.
                 </small>
 
             </div>
@@ -435,7 +702,7 @@ function getProjectFormHTML(project = null) {
 
             <div class="form-group">
 
-                <label for="projectLink">
+                <label>
                     Project Link
                 </label>
 
@@ -443,7 +710,9 @@ function getProjectFormHTML(project = null) {
                     type="url"
                     id="projectLink"
                     placeholder="https://github.com/..."
-                    value="${escapeHTML(projectLink)}"
+                    value="${escapeHTML(
+                        projectLink
+                    )}"
                 >
 
             </div>
@@ -463,7 +732,11 @@ function getProjectFormHTML(project = null) {
                     type="submit"
                     class="btn-primary"
                 >
-                    ${isEdit ? "حفظ التعديلات" : "إضافة المشروع"}
+                    ${
+                        isEdit
+                            ? "حفظ التعديلات"
+                            : "إضافة المشروع"
+                    }
                 </button>
 
             </div>
@@ -471,11 +744,12 @@ function getProjectFormHTML(project = null) {
         </form>
 
     `;
+
 }
 
 
 /* =========================================================
-   OPEN ADD PROJECT MODAL
+   ADD PROJECT
    ========================================================= */
 
 function openAddProjectModal() {
@@ -485,23 +759,18 @@ function openAddProjectModal() {
         getProjectFormHTML()
     );
 
+
     attachProjectFormEvents();
 
 }
 
 
-/* =========================================================
-   OPEN EDIT PROJECT MODAL
-   ========================================================= */
+if (addProjectBtn) {
 
-function openEditProjectModal(project) {
-
-    openModal(
-        "تعديل المشروع",
-        getProjectFormHTML(project)
+    addProjectBtn.addEventListener(
+        "click",
+        openAddProjectModal
     );
-
-    attachProjectFormEvents();
 
 }
 
@@ -512,19 +781,24 @@ function openEditProjectModal(project) {
 
 function attachProjectFormEvents() {
 
-    const form = document.getElementById("projectForm");
+    const form =
+        document.getElementById(
+            "projectForm"
+        );
 
-    const cancelButton =
-        document.getElementById("cancelProjectBtn");
+
+    const cancel =
+        document.getElementById(
+            "cancelProjectBtn"
+        );
 
 
-    if (cancelButton) {
+    if (cancel) {
 
-        cancelButton.addEventListener("click", () => {
-
-            closeModal();
-
-        });
+        cancel.addEventListener(
+            "click",
+            closeModal
+        );
 
     }
 
@@ -534,13 +808,16 @@ function attachProjectFormEvents() {
     }
 
 
-    form.addEventListener("submit", async (event) => {
+    form.addEventListener(
+        "submit",
+        async (event) => {
 
-        event.preventDefault();
+            event.preventDefault();
 
-        await saveProject();
+            await saveProject();
 
-    });
+        }
+    );
 
 }
 
@@ -551,34 +828,59 @@ function attachProjectFormEvents() {
 
 async function saveProject() {
 
-    const projectId =
-        document.getElementById("projectId")?.value.trim() || "";
+    const id =
+        document.getElementById(
+            "projectId"
+        )?.value.trim() || "";
+
 
     const title =
-        document.getElementById("projectTitle")?.value.trim() || "";
+        document.getElementById(
+            "projectTitle"
+        )?.value.trim() || "";
+
 
     const category =
-        document.getElementById("projectCategory")?.value || "gis";
+        document.getElementById(
+            "projectCategory"
+        )?.value || "gis";
+
 
     const description =
-        document.getElementById("projectDescription")?.value.trim() || "";
+        document.getElementById(
+            "projectDescription"
+        )?.value.trim() || "";
+
 
     const tools =
-        document.getElementById("projectTools")?.value.trim() || "";
+        document.getElementById(
+            "projectTools"
+        )?.value.trim() || "";
+
 
     const status =
-        document.getElementById("projectStatus")?.value || "Planned";
+        document.getElementById(
+            "projectStatus"
+        )?.value || "Planned";
+
 
     const imageUrl =
-        document.getElementById("projectImageUrl")?.value.trim() || "";
+        document.getElementById(
+            "projectImageUrl"
+        )?.value.trim() || "";
+
 
     const projectLink =
-        document.getElementById("projectLink")?.value.trim() || "";
+        document.getElementById(
+            "projectLink"
+        )?.value.trim() || "";
 
 
     if (!title) {
 
-        alert("من فضلك اكتب اسم المشروع.");
+        alert(
+            "من فضلك اكتب اسم المشروع."
+        );
 
         return;
 
@@ -587,67 +889,73 @@ async function saveProject() {
 
     if (!description) {
 
-        alert("من فضلك اكتب وصف المشروع.");
+        alert(
+            "من فضلك اكتب وصف المشروع."
+        );
 
         return;
 
     }
 
 
-    const projectData = {
+    const data = {
 
-        title: title,
+        title,
 
-        category: category,
+        category,
 
-        description: description,
+        description,
 
-        tools: tools,
+        tools,
 
-        status: status,
+        status,
 
-        imageUrl: imageUrl,
+        imageUrl,
 
-        projectLink: projectLink,
+        projectLink,
 
-        updatedAt: serverTimestamp()
+        updatedAt:
+            serverTimestamp()
 
     };
 
 
     try {
 
-        if (projectId) {
-
-            /* =========================
-               UPDATE
-               ========================= */
-
-            const projectRef =
-                doc(db, PROJECTS_COLLECTION, projectId);
+        if (id) {
 
             await updateDoc(
-                projectRef,
-                projectData
+                doc(
+                    db,
+                    PROJECTS_COLLECTION,
+                    id
+                ),
+                data
             );
 
-            alert("تم تعديل المشروع بنجاح.");
+
+            alert(
+                "تم تعديل المشروع بنجاح."
+            );
 
         } else {
 
-            /* =========================
-               CREATE
-               ========================= */
-
-            projectData.createdAt =
+            data.createdAt =
                 serverTimestamp();
 
+
             await addDoc(
-                collection(db, PROJECTS_COLLECTION),
-                projectData
+                collection(
+                    db,
+                    PROJECTS_COLLECTION
+                ),
+                data
             );
 
-            alert("تم إضافة المشروع بنجاح.");
+
+            alert(
+                "تم إضافة المشروع بنجاح."
+            );
 
         }
 
@@ -661,10 +969,12 @@ async function saveProject() {
 
     } catch (error) {
 
-        console.error("Save project error:", error);
+        console.error(
+            error
+        );
 
         alert(
-            "حدث خطأ أثناء حفظ المشروع.\n\n" +
+            "حدث خطأ أثناء حفظ المشروع:\n\n" +
             error.message
         );
 
@@ -703,44 +1013,47 @@ async function loadProjects() {
 
         const snapshot =
             await getDocs(
-                collection(db, PROJECTS_COLLECTION)
+                collection(
+                    db,
+                    PROJECTS_COLLECTION
+                )
             );
 
 
         const projects = [];
 
 
-        snapshot.forEach((documentSnapshot) => {
+        snapshot.forEach(
+            (item) => {
 
-            projects.push({
+                projects.push({
 
-                id: documentSnapshot.id,
+                    id: item.id,
 
-                ...documentSnapshot.data()
+                    ...item.data()
 
-            });
+                });
 
-        });
-
-
-        /* =====================================================
-           SORT PROJECTS
-           ===================================================== */
-
-        projects.sort((a, b) => {
-
-            const aTime =
-                a.createdAt?.seconds || 0;
-
-            const bTime =
-                b.createdAt?.seconds || 0;
-
-            return bTime - aTime;
-
-        });
+            }
+        );
 
 
-        if (projects.length === 0) {
+        projects.sort(
+            (a, b) => {
+
+                return (
+                    (b.createdAt?.seconds || 0) -
+                    (a.createdAt?.seconds || 0)
+                );
+
+            }
+        );
+
+
+        if (
+            projects.length ===
+            0
+        ) {
 
             projectsContainer.innerHTML = `
 
@@ -755,61 +1068,39 @@ async function loadProjects() {
                     </h3>
 
                     <p>
-                        ابدأ بإضافة أول مشروع إلى البورتفوليو.
+                        ابدأ بإضافة أول مشروع.
                     </p>
-
-                    <button
-                        class="btn-primary"
-                        id="emptyAddProjectBtn"
-                    >
-                        + إضافة مشروع
-                    </button>
 
                 </div>
 
             `;
 
+        } else {
 
-            const emptyAddButton =
-                document.getElementById(
-                    "emptyAddProjectBtn"
-                );
-
-
-            if (emptyAddButton) {
-
-                emptyAddButton.addEventListener(
-                    "click",
-                    openAddProjectModal
-                );
-
-            }
+            projectsContainer.innerHTML =
+                projects
+                    .map(
+                        createProjectCard
+                    )
+                    .join("");
 
 
-            updateProjectCount(0);
-
-            return;
+            attachProjectCardEvents();
 
         }
 
 
-        projectsContainer.innerHTML =
-            projects.map(
-                createProjectCard
-            ).join("");
+        if (projectsCount) {
 
+            projectsCount.textContent =
+                projects.length;
 
-        attachProjectCardEvents();
-
-        updateProjectCount(
-            projects.length
-        );
+        }
 
 
     } catch (error) {
 
         console.error(
-            "Load projects error:",
             error
         );
 
@@ -823,39 +1114,18 @@ async function loadProjects() {
                 </div>
 
                 <h3>
-                    تعذر تحميل المشاريع
+                    حدث خطأ
                 </h3>
 
                 <p>
-                    ${escapeHTML(error.message)}
+                    ${escapeHTML(
+                        error.message
+                    )}
                 </p>
-
-                <button
-                    class="btn-primary"
-                    id="retryProjectsBtn"
-                >
-                    إعادة المحاولة
-                </button>
 
             </div>
 
         `;
-
-
-        const retryButton =
-            document.getElementById(
-                "retryProjectsBtn"
-            );
-
-
-        if (retryButton) {
-
-            retryButton.addEventListener(
-                "click",
-                loadProjects
-            );
-
-        }
 
     }
 
@@ -863,117 +1133,132 @@ async function loadProjects() {
 
 
 /* =========================================================
-   CREATE PROJECT CARD
+   PROJECT CARD
    ========================================================= */
 
-function createProjectCard(project) {
+function createProjectCard(
+    project
+) {
 
-    const image = project.imageUrl
-        ? `
-            <img
-                src="${escapeHTML(project.imageUrl)}"
-                alt="${escapeHTML(project.title)}"
-                class="project-admin-image"
-                loading="lazy"
-                onerror="this.style.display='none';"
-            >
-        `
-        : `
-            <div class="project-admin-placeholder">
-                <span>📁</span>
-            </div>
-        `;
+    const categories = {
 
+        gis: "GIS",
 
-    const categoryNames = {
+        surveying: "Surveying",
 
-        "gis": "GIS",
+        "remote-sensing":
+            "Remote Sensing",
 
-        "surveying": "Surveying",
-
-        "remote-sensing": "Remote Sensing",
-
-        "programming": "Programming"
+        programming:
+            "Programming"
 
     };
 
 
-    const categoryName =
-        categoryNames[project.category]
-        || project.category
-        || "Other";
+    const category =
+        categories[
+            project.category
+        ] ||
+        project.category ||
+        "Other";
+
+
+    const image =
+        project.imageUrl
+            ? `
+                <img
+                    src="${escapeHTML(
+                        project.imageUrl
+                    )}"
+                    alt="${escapeHTML(
+                        project.title
+                    )}"
+                    class="project-admin-image"
+                >
+            `
+            : `
+                <div
+                    class="project-admin-placeholder"
+                >
+                    📁
+                </div>
+            `;
 
 
     return `
 
         <article
             class="admin-project-card"
-            data-project-id="${escapeHTML(project.id)}"
         >
 
-            <div class="admin-project-image">
+            <div
+                class="admin-project-image"
+            >
 
                 ${image}
 
             </div>
 
 
-            <div class="admin-project-content">
+            <div
+                class="admin-project-content"
+            >
 
-                <div class="project-top">
+                <div
+                    class="project-top"
+                >
 
-                    <span class="project-category">
-
-                        ${escapeHTML(categoryName)}
-
+                    <span
+                        class="project-category"
+                    >
+                        ${escapeHTML(
+                            category
+                        )}
                     </span>
 
 
                     <span
-                        class="project-status status-${escapeHTML(
-                            String(project.status || "")
-                                .toLowerCase()
-                                .replace(/\s+/g, "-")
-                        )}"
+                        class="project-status"
                     >
-
                         ${escapeHTML(
-                            project.status || "Planned"
+                            project.status ||
+                            "Planned"
                         )}
-
                     </span>
 
                 </div>
 
 
                 <h3>
-
                     ${escapeHTML(
-                        project.title || "Untitled Project"
+                        project.title ||
+                        "Untitled Project"
                     )}
-
                 </h3>
 
 
                 <p>
-
                     ${escapeHTML(
-                        project.description || ""
+                        project.description ||
+                        ""
                     )}
-
                 </p>
 
 
                 ${
                     project.tools
                         ? `
-                            <div class="project-tools">
+                            <div
+                                class="project-tools"
+                            >
 
                                 <strong>
                                     Tools:
                                 </strong>
 
-                                ${escapeHTML(project.tools)}
+                                ${escapeHTML(
+                                    project.tools
+                                )}
 
                             </div>
                         `
@@ -981,11 +1266,15 @@ function createProjectCard(project) {
                 }
 
 
-                <div class="project-card-actions">
+                <div
+                    class="project-card-actions"
+                >
 
                     <button
                         class="btn-edit edit-project-btn"
-                        data-id="${escapeHTML(project.id)}"
+                        data-id="${escapeHTML(
+                            project.id
+                        )}"
                     >
                         ✏️ تعديل
                     </button>
@@ -993,26 +1282,12 @@ function createProjectCard(project) {
 
                     <button
                         class="btn-delete delete-project-btn"
-                        data-id="${escapeHTML(project.id)}"
+                        data-id="${escapeHTML(
+                            project.id
+                        )}"
                     >
                         🗑️ حذف
                     </button>
-
-
-                    ${
-                        project.projectLink
-                            ? `
-                                <a
-                                    href="${escapeHTML(project.projectLink)}"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="btn-view"
-                                >
-                                    🔗 المشروع
-                                </a>
-                            `
-                            : ""
-                    }
 
                 </div>
 
@@ -1026,59 +1301,53 @@ function createProjectCard(project) {
 
 
 /* =========================================================
-   PROJECT CARD EVENTS
+   PROJECT EVENTS
    ========================================================= */
 
 function attachProjectCardEvents() {
 
-    const editButtons =
-        document.querySelectorAll(
+    document
+        .querySelectorAll(
             ".edit-project-btn"
+        )
+        .forEach(
+            (button) => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        editProject(
+                            button.dataset.id
+                        );
+
+                    }
+                );
+
+            }
         );
 
 
-    const deleteButtons =
-        document.querySelectorAll(
+    document
+        .querySelectorAll(
             ".delete-project-btn"
-        );
+        )
+        .forEach(
+            (button) => {
 
+                button.addEventListener(
+                    "click",
+                    () => {
 
-    editButtons.forEach((button) => {
+                        deleteProject(
+                            button.dataset.id
+                        );
 
-        button.addEventListener(
-            "click",
-            async () => {
-
-                const projectId =
-                    button.dataset.id;
-
-                await editProject(
-                    projectId
+                    }
                 );
 
             }
         );
-
-    });
-
-
-    deleteButtons.forEach((button) => {
-
-        button.addEventListener(
-            "click",
-            async () => {
-
-                const projectId =
-                    button.dataset.id;
-
-                await deleteProject(
-                    projectId
-                );
-
-            }
-        );
-
-    });
 
 }
 
@@ -1087,7 +1356,9 @@ function attachProjectCardEvents() {
    EDIT PROJECT
    ========================================================= */
 
-async function editProject(projectId) {
+async function editProject(
+    projectId
+) {
 
     try {
 
@@ -1100,30 +1371,32 @@ async function editProject(projectId) {
             );
 
 
-        let selectedProject = null;
+        let project = null;
 
 
-        snapshot.forEach((documentSnapshot) => {
+        snapshot.forEach(
+            (item) => {
 
-            if (
-                documentSnapshot.id ===
-                projectId
-            ) {
+                if (
+                    item.id ===
+                    projectId
+                ) {
 
-                selectedProject = {
+                    project = {
 
-                    id: documentSnapshot.id,
+                        id: item.id,
 
-                    ...documentSnapshot.data()
+                        ...item.data()
 
-                };
+                    };
+
+                }
 
             }
+        );
 
-        });
 
-
-        if (!selectedProject) {
+        if (!project) {
 
             alert(
                 "لم يتم العثور على المشروع."
@@ -1134,15 +1407,20 @@ async function editProject(projectId) {
         }
 
 
-        openEditProjectModal(
-            selectedProject
+        openModal(
+            "تعديل المشروع",
+            getProjectFormHTML(
+                project
+            )
         );
+
+
+        attachProjectFormEvents();
 
 
     } catch (error) {
 
         console.error(
-            "Edit project error:",
             error
         );
 
@@ -1159,11 +1437,13 @@ async function editProject(projectId) {
    DELETE PROJECT
    ========================================================= */
 
-async function deleteProject(projectId) {
+async function deleteProject(
+    projectId
+) {
 
     const confirmed =
         confirm(
-            "هل أنت متأكد من حذف هذا المشروع؟\n\nلا يمكن التراجع عن هذه العملية."
+            "هل أنت متأكد من حذف المشروع؟"
         );
 
 
@@ -1184,7 +1464,7 @@ async function deleteProject(projectId) {
 
 
         alert(
-            "تم حذف المشروع بنجاح."
+            "تم حذف المشروع."
         );
 
 
@@ -1196,13 +1476,11 @@ async function deleteProject(projectId) {
     } catch (error) {
 
         console.error(
-            "Delete project error:",
             error
         );
 
-
         alert(
-            "حدث خطأ أثناء حذف المشروع.\n\n" +
+            "حدث خطأ أثناء الحذف:\n\n" +
             error.message
         );
 
@@ -1212,15 +1490,886 @@ async function deleteProject(projectId) {
 
 
 /* =========================================================
-   PROJECT COUNT
+   CERTIFICATE FORM
    ========================================================= */
 
-function updateProjectCount(count) {
+function getCertificateFormHTML(
+    certificate = null
+) {
 
-    if (projectsCount) {
+    const isEdit =
+        certificate !== null;
 
-        projectsCount.textContent =
-            count;
+
+    return `
+
+        <form
+            id="certificateForm"
+            class="admin-form"
+        >
+
+            <input
+                type="hidden"
+                id="certificateId"
+                value="${escapeHTML(
+                    certificate?.id || ""
+                )}"
+            >
+
+
+            <div class="form-group">
+
+                <label>
+                    Certificate Name
+                </label>
+
+                <input
+                    type="text"
+                    id="certificateTitle"
+                    placeholder="مثال: ArcGIS Pro Training"
+                    value="${escapeHTML(
+                        certificate?.title || ""
+                    )}"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Issuing Organization
+                </label>
+
+                <input
+                    type="text"
+                    id="certificateIssuer"
+                    placeholder="مثال: GeoSteps"
+                    value="${escapeHTML(
+                        certificate?.issuer || ""
+                    )}"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Date
+                </label>
+
+                <input
+                    type="text"
+                    id="certificateDate"
+                    placeholder="2026"
+                    value="${escapeHTML(
+                        certificate?.date || ""
+                    )}"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Description
+                </label>
+
+                <textarea
+                    id="certificateDescription"
+                    rows="4"
+                    placeholder="وصف مختصر للشهادة..."
+                >${escapeHTML(
+                    certificate?.description || ""
+                )}</textarea>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Certificate Image URL
+                </label>
+
+                <input
+                    type="url"
+                    id="certificateImageUrl"
+                    placeholder="https://..."
+                    value="${escapeHTML(
+                        certificate?.imageUrl || ""
+                    )}"
+                >
+
+                <small>
+                    رابط صورة الشهادة.
+                </small>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Certificate Link
+                </label>
+
+                <input
+                    type="url"
+                    id="certificateUrl"
+                    placeholder="https://..."
+                    value="${escapeHTML(
+                        certificate?.certificateUrl || ""
+                    )}"
+                >
+
+            </div>
+
+
+            <div class="form-actions">
+
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    id="cancelCertificateBtn"
+                >
+                    إلغاء
+                </button>
+
+
+                <button
+                    type="submit"
+                    class="btn-primary"
+                >
+
+                    ${
+                        isEdit
+                            ? "حفظ التعديلات"
+                            : "إضافة الشهادة"
+                    }
+
+                </button>
+
+            </div>
+
+        </form>
+
+    `;
+
+}
+
+
+/* =========================================================
+   ADD CERTIFICATE
+   ========================================================= */
+
+if (addCertificateBtn) {
+
+    addCertificateBtn.addEventListener(
+        "click",
+        () => {
+
+            openModal(
+                "إضافة شهادة جديدة",
+                getCertificateFormHTML()
+            );
+
+
+            attachCertificateFormEvents();
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   CERTIFICATE FORM EVENTS
+   ========================================================= */
+
+function attachCertificateFormEvents() {
+
+    const form =
+        document.getElementById(
+            "certificateForm"
+        );
+
+
+    const cancel =
+        document.getElementById(
+            "cancelCertificateBtn"
+        );
+
+
+    if (cancel) {
+
+        cancel.addEventListener(
+            "click",
+            closeModal
+        );
+
+    }
+
+
+    if (!form) {
+        return;
+    }
+
+
+    form.addEventListener(
+        "submit",
+        async (event) => {
+
+            event.preventDefault();
+
+            await saveCertificate();
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   SAVE CERTIFICATE
+   ========================================================= */
+
+async function saveCertificate() {
+
+    const id =
+        document.getElementById(
+            "certificateId"
+        )?.value.trim() || "";
+
+
+    const title =
+        document.getElementById(
+            "certificateTitle"
+        )?.value.trim() || "";
+
+
+    const issuer =
+        document.getElementById(
+            "certificateIssuer"
+        )?.value.trim() || "";
+
+
+    const date =
+        document.getElementById(
+            "certificateDate"
+        )?.value.trim() || "";
+
+
+    const description =
+        document.getElementById(
+            "certificateDescription"
+        )?.value.trim() || "";
+
+
+    const imageUrl =
+        document.getElementById(
+            "certificateImageUrl"
+        )?.value.trim() || "";
+
+
+    const certificateUrl =
+        document.getElementById(
+            "certificateUrl"
+        )?.value.trim() || "";
+
+
+    if (!title) {
+
+        alert(
+            "من فضلك اكتب اسم الشهادة."
+        );
+
+        return;
+
+    }
+
+
+    if (!issuer) {
+
+        alert(
+            "من فضلك اكتب الجهة المانحة."
+        );
+
+        return;
+
+    }
+
+
+    const data = {
+
+        title,
+
+        issuer,
+
+        date,
+
+        description,
+
+        imageUrl,
+
+        certificateUrl,
+
+        updatedAt:
+            serverTimestamp()
+
+    };
+
+
+    try {
+
+        if (id) {
+
+            await updateDoc(
+                doc(
+                    db,
+                    CERTIFICATES_COLLECTION,
+                    id
+                ),
+                data
+            );
+
+
+            alert(
+                "تم تعديل الشهادة بنجاح."
+            );
+
+        } else {
+
+            data.createdAt =
+                serverTimestamp();
+
+
+            await addDoc(
+                collection(
+                    db,
+                    CERTIFICATES_COLLECTION
+                ),
+                data
+            );
+
+
+            alert(
+                "تم إضافة الشهادة بنجاح."
+            );
+
+        }
+
+
+        closeModal();
+
+        await loadCertificates();
+
+        await updateDashboardStats();
+
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+        alert(
+            "حدث خطأ أثناء حفظ الشهادة:\n\n" +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   LOAD CERTIFICATES
+   ========================================================= */
+
+async function loadCertificates() {
+
+    if (!certificatesContainer) {
+        return;
+    }
+
+
+    certificatesContainer.innerHTML = `
+
+        <div class="loading-state">
+
+            <div class="loading-spinner"></div>
+
+            <p>
+                جاري تحميل الشهادات...
+            </p>
+
+        </div>
+
+    `;
+
+
+    try {
+
+        const snapshot =
+            await getDocs(
+                collection(
+                    db,
+                    CERTIFICATES_COLLECTION
+                )
+            );
+
+
+        const certificates = [];
+
+
+        snapshot.forEach(
+            (item) => {
+
+                certificates.push({
+
+                    id: item.id,
+
+                    ...item.data()
+
+                });
+
+            }
+        );
+
+
+        certificates.sort(
+            (a, b) => {
+
+                return (
+                    (b.createdAt?.seconds || 0) -
+                    (a.createdAt?.seconds || 0)
+                );
+
+            }
+        );
+
+
+        if (
+            certificates.length ===
+            0
+        ) {
+
+            certificatesContainer.innerHTML = `
+
+                <div class="empty-state">
+
+                    <div class="empty-icon">
+                        🎓
+                    </div>
+
+                    <h3>
+                        لا توجد شهادات
+                    </h3>
+
+                    <p>
+                        ابدأ بإضافة أول شهادة.
+                    </p>
+
+                </div>
+
+            `;
+
+        } else {
+
+            certificatesContainer.innerHTML =
+                certificates
+                    .map(
+                        createCertificateCard
+                    )
+                    .join("");
+
+
+            attachCertificateCardEvents();
+
+        }
+
+
+        if (certificatesCount) {
+
+            certificatesCount.textContent =
+                certificates.length;
+
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+
+        certificatesContainer.innerHTML = `
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    ⚠️
+                </div>
+
+                <h3>
+                    حدث خطأ
+                </h3>
+
+                <p>
+                    ${escapeHTML(
+                        error.message
+                    )}
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+/* =========================================================
+   CERTIFICATE CARD
+   ========================================================= */
+
+function createCertificateCard(
+    certificate
+) {
+
+    const image =
+        certificate.imageUrl
+            ? `
+                <img
+                    src="${escapeHTML(
+                        certificate.imageUrl
+                    )}"
+                    alt="${escapeHTML(
+                        certificate.title
+                    )}"
+                    class="certificate-admin-image"
+                >
+            `
+            : `
+                <div
+                    class="certificate-placeholder"
+                >
+                    🎓
+                </div>
+            `;
+
+
+    return `
+
+        <article
+            class="admin-certificate-card"
+        >
+
+            <div
+                class="certificate-admin-image-wrapper"
+            >
+
+                ${image}
+
+            </div>
+
+
+            <div
+                class="certificate-admin-content"
+            >
+
+                <h3>
+                    ${escapeHTML(
+                        certificate.title ||
+                        "Certificate"
+                    )}
+                </h3>
+
+
+                <p>
+                    <strong>
+                        Issuer:
+                    </strong>
+
+                    ${escapeHTML(
+                        certificate.issuer ||
+                        ""
+                    )}
+                </p>
+
+
+                ${
+                    certificate.date
+                        ? `
+                            <p>
+                                <strong>
+                                    Date:
+                                </strong>
+
+                                ${escapeHTML(
+                                    certificate.date
+                                )}
+                            </p>
+                        `
+                        : ""
+                }
+
+
+                ${
+                    certificate.description
+                        ? `
+                            <p>
+                                ${escapeHTML(
+                                    certificate.description
+                                )}
+                            </p>
+                        `
+                        : ""
+                }
+
+
+                <div
+                    class="certificate-card-actions"
+                >
+
+                    <button
+                        class="btn-edit edit-certificate-btn"
+                        data-id="${escapeHTML(
+                            certificate.id
+                        )}"
+                    >
+                        ✏️ تعديل
+                    </button>
+
+
+                    <button
+                        class="btn-delete delete-certificate-btn"
+                        data-id="${escapeHTML(
+                            certificate.id
+                        )}"
+                    >
+                        🗑️ حذف
+                    </button>
+
+
+                    ${
+                        certificate.certificateUrl
+                            ? `
+                                <a
+                                    href="${escapeHTML(
+                                        certificate.certificateUrl
+                                    )}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="btn-view"
+                                >
+                                    🔗 الشهادة
+                                </a>
+                            `
+                            : ""
+                    }
+
+                </div>
+
+            </div>
+
+        </article>
+
+    `;
+
+}
+
+
+/* =========================================================
+   CERTIFICATE EVENTS
+   ========================================================= */
+
+function attachCertificateCardEvents() {
+
+    document
+        .querySelectorAll(
+            ".edit-certificate-btn"
+        )
+        .forEach(
+            (button) => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        editCertificate(
+                            button.dataset.id
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+    document
+        .querySelectorAll(
+            ".delete-certificate-btn"
+        )
+        .forEach(
+            (button) => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        deleteCertificate(
+                            button.dataset.id
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   EDIT CERTIFICATE
+   ========================================================= */
+
+async function editCertificate(
+    certificateId
+) {
+
+    try {
+
+        const snapshot =
+            await getDocs(
+                collection(
+                    db,
+                    CERTIFICATES_COLLECTION
+                )
+            );
+
+
+        let certificate = null;
+
+
+        snapshot.forEach(
+            (item) => {
+
+                if (
+                    item.id ===
+                    certificateId
+                ) {
+
+                    certificate = {
+
+                        id: item.id,
+
+                        ...item.data()
+
+                    };
+
+                }
+
+            }
+        );
+
+
+        if (!certificate) {
+
+            alert(
+                "لم يتم العثور على الشهادة."
+            );
+
+            return;
+
+        }
+
+
+        openModal(
+            "تعديل الشهادة",
+            getCertificateFormHTML(
+                certificate
+            )
+        );
+
+
+        attachCertificateFormEvents();
+
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+        alert(
+            "حدث خطأ أثناء تحميل الشهادة."
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   DELETE CERTIFICATE
+   ========================================================= */
+
+async function deleteCertificate(
+    certificateId
+) {
+
+    const confirmed =
+        confirm(
+            "هل أنت متأكد من حذف هذه الشهادة؟"
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        await deleteDoc(
+            doc(
+                db,
+                CERTIFICATES_COLLECTION,
+                certificateId
+            )
+        );
+
+
+        alert(
+            "تم حذف الشهادة بنجاح."
+        );
+
+
+        await loadCertificates();
+
+        await updateDashboardStats();
+
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+        alert(
+            "حدث خطأ أثناء حذف الشهادة:\n\n" +
+            error.message
+        );
 
     }
 
@@ -1239,7 +2388,16 @@ async function updateDashboardStats() {
             await getDocs(
                 collection(
                     db,
-                    "projects"
+                    PROJECTS_COLLECTION
+                )
+            );
+
+
+        const certificatesSnapshot =
+            await getDocs(
+                collection(
+                    db,
+                    CERTIFICATES_COLLECTION
                 )
             );
 
@@ -1252,17 +2410,10 @@ async function updateDashboardStats() {
         }
 
 
-        /*
-
-        Certificates and Courses and Skills
-        will be connected later.
-
-        */
-
         if (certificatesCount) {
 
             certificatesCount.textContent =
-                "0";
+                certificatesSnapshot.size;
 
         }
 
@@ -1296,55 +2447,8 @@ async function updateDashboardStats() {
 
 
 /* =========================================================
-   ADD PROJECT BUTTON
+   COURSES - TEMPORARY
    ========================================================= */
-
-if (addProjectBtn) {
-
-    addProjectBtn.addEventListener(
-        "click",
-        openAddProjectModal
-    );
-
-}
-
-
-/* =========================================================
-   OTHER ADD BUTTONS
-   ========================================================= */
-
-if (addCertificateBtn) {
-
-    addCertificateBtn.addEventListener(
-        "click",
-        () => {
-
-            openModal(
-                "إضافة شهادة",
-                `
-                    <div class="empty-state">
-
-                        <div class="empty-icon">
-                            🎓
-                        </div>
-
-                        <h3>
-                            قسم الشهادات قادم
-                        </h3>
-
-                        <p>
-                            سنربط الشهادات بـ Firestore في الخطوة القادمة.
-                        </p>
-
-                    </div>
-                `
-            );
-
-        }
-    );
-
-}
-
 
 if (addCourseBtn) {
 
@@ -1362,11 +2466,11 @@ if (addCourseBtn) {
                         </div>
 
                         <h3>
-                            قسم الكورسات قادم
+                            قسم الكورسات
                         </h3>
 
                         <p>
-                            سنضيف إدارة الكورسات والروابط لاحقًا.
+                            سنقوم بربط الكورسات بـ Firestore بعد الانتهاء من الشهادات.
                         </p>
 
                     </div>
@@ -1378,6 +2482,10 @@ if (addCourseBtn) {
 
 }
 
+
+/* =========================================================
+   SKILLS - TEMPORARY
+   ========================================================= */
 
 if (addSkillBtn) {
 
@@ -1395,11 +2503,11 @@ if (addSkillBtn) {
                         </div>
 
                         <h3>
-                            قسم المهارات قادم
+                            قسم المهارات
                         </h3>
 
                         <p>
-                            سنضيف إدارة المهارات لاحقًا.
+                            سنقوم بربط المهارات بـ Firestore لاحقًا.
                         </p>
 
                     </div>
@@ -1413,7 +2521,7 @@ if (addSkillBtn) {
 
 
 /* =========================================================
-   AUTHENTICATION GUARD
+   AUTH GUARD
    ========================================================= */
 
 onAuthStateChanged(
@@ -1430,27 +2538,14 @@ onAuthStateChanged(
         }
 
 
-        if (user.uid !== ADMIN_UID) {
+        if (
+            user.uid !==
+            ADMIN_UID
+        ) {
 
-            console.warn(
-                "Unauthorized user:",
-                user.uid
+            await signOut(
+                auth
             );
-
-
-            try {
-
-                await signOut(auth);
-
-            } catch (error) {
-
-                console.error(
-                    "Sign out error:",
-                    error
-                );
-
-            }
-
 
             window.location.href =
                 "login.html";
@@ -1460,10 +2555,6 @@ onAuthStateChanged(
         }
 
 
-        /* =================================================
-           AUTHORIZED ADMIN
-           ================================================= */
-
         console.log(
             "Admin authenticated:",
             user.email
@@ -1471,6 +2562,8 @@ onAuthStateChanged(
 
 
         await loadProjects();
+
+        await loadCertificates();
 
         await updateDashboardStats();
 
@@ -1482,13 +2575,15 @@ onAuthStateChanged(
    INITIAL SECTION
    ========================================================= */
 
-showSection("dashboardSection");
+showSection(
+    "dashboardSection"
+);
 
 
 /* =========================================================
-   CONSOLE
+   READY
    ========================================================= */
 
 console.log(
-    "Samir Portfolio Admin Dashboard loaded."
+    "Samir Portfolio Admin loaded successfully."
 );
