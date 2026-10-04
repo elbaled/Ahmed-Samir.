@@ -1,356 +1,903 @@
 /* =========================================================
-   AHMED SAMIR PORTFOLIO
-   Main JavaScript
-========================================================= */
+   SAMIR PORTFOLIO - MAIN WEBSITE
+   Firebase Projects + Theme + Navigation
+   ========================================================= */
 
 "use strict";
 
 
 /* =========================================================
-   ELEMENTS
-========================================================= */
+   FIREBASE
+   ========================================================= */
 
-const body = document.body;
+import { db } from "./firebase.js";
 
-const themeBtn =
-    document.getElementById("themeBtn");
+import {
+    collection,
+    getDocs
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-const menuBtn =
-    document.getElementById("menuBtn");
 
-const navbar =
-    document.getElementById("navbar");
+/* =========================================================
+   DOM ELEMENTS
+   ========================================================= */
+
+const yearElement =
+    document.getElementById("currentYear");
+
+const menuToggle =
+    document.querySelector(".menu-toggle");
 
 const navLinks =
-    document.querySelectorAll(".nav-link");
+    document.querySelector(".nav-links");
+
+const themeToggle =
+    document.getElementById("themeToggle");
+
+const projectsGrid =
+    document.querySelector(".projects-grid");
 
 const filterButtons =
     document.querySelectorAll(".filter-btn");
 
-const projectCards =
-    document.querySelectorAll(".project-card");
-
 const backToTop =
     document.getElementById("backToTop");
-
-const currentYear =
-    document.getElementById("currentYear");
 
 
 /* =========================================================
    CURRENT YEAR
-========================================================= */
+   ========================================================= */
 
-if (currentYear) {
+if (yearElement) {
 
-    currentYear.textContent =
+    yearElement.textContent =
         new Date().getFullYear();
 
 }
 
 
 /* =========================================================
+   HTML ESCAPE
+   ========================================================= */
+
+function escapeHTML(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return "";
+
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+/* =========================================================
    MOBILE MENU
-========================================================= */
+   ========================================================= */
 
-if (menuBtn && navbar) {
+if (menuToggle && navLinks) {
 
-    menuBtn.addEventListener("click", () => {
+    menuToggle.addEventListener(
+        "click",
+        () => {
 
-        navbar.classList.toggle("open");
+            navLinks.classList.toggle(
+                "active"
+            );
 
-        const isOpen =
-            navbar.classList.contains("open");
+            menuToggle.classList.toggle(
+                "active"
+            );
 
-        menuBtn.textContent =
-            isOpen ? "✕" : "☰";
-
-    });
+        }
+    );
 
 }
 
 
 /* =========================================================
    CLOSE MOBILE MENU
-========================================================= */
+   ========================================================= */
 
-navLinks.forEach((link) => {
+document
+    .querySelectorAll(".nav-links a")
+    .forEach((link) => {
 
-    link.addEventListener("click", () => {
+        link.addEventListener(
+            "click",
+            () => {
 
-        if (navbar) {
+                navLinks?.classList.remove(
+                    "active"
+                );
 
-            navbar.classList.remove("open");
+                menuToggle?.classList.remove(
+                    "active"
+                );
 
-        }
-
-        if (menuBtn) {
-
-            menuBtn.textContent = "☰";
-
-        }
+            }
+        );
 
     });
-
-});
 
 
 /* =========================================================
    THEME
-========================================================= */
+   ========================================================= */
 
 const savedTheme =
-    localStorage.getItem("portfolio-theme");
+    localStorage.getItem(
+        "portfolio-theme"
+    );
+
 
 if (savedTheme === "light") {
 
-    body.classList.add("light-mode");
+    document.body.classList.add(
+        "light-theme"
+    );
 
-    if (themeBtn) {
+}
 
-        themeBtn.textContent = "☾";
+
+function updateThemeIcon() {
+
+    if (!themeToggle) {
+        return;
+    }
+
+    const isLight =
+        document.body.classList.contains(
+            "light-theme"
+        );
+
+
+    themeToggle.textContent =
+        isLight
+            ? "☀️"
+            : "🌙";
+
+}
+
+
+updateThemeIcon();
+
+
+if (themeToggle) {
+
+    themeToggle.addEventListener(
+        "click",
+        () => {
+
+            document.body.classList.toggle(
+                "light-theme"
+            );
+
+
+            const isLight =
+                document.body.classList.contains(
+                    "light-theme"
+                );
+
+
+            localStorage.setItem(
+                "portfolio-theme",
+                isLight
+                    ? "light"
+                    : "dark"
+            );
+
+
+            updateThemeIcon();
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   PROJECT CATEGORY NAMES
+   ========================================================= */
+
+const categoryNames = {
+
+    all: "All",
+
+    gis: "GIS",
+
+    surveying: "Surveying",
+
+    "remote-sensing":
+        "Remote Sensing",
+
+    programming:
+        "Programming"
+
+};
+
+
+/* =========================================================
+   PROJECT DATA
+   ========================================================= */
+
+let allProjects = [];
+
+
+/* =========================================================
+   LOAD PROJECTS FROM FIRESTORE
+   ========================================================= */
+
+async function loadProjects() {
+
+    if (!projectsGrid) {
+        return;
+    }
+
+
+    projectsGrid.innerHTML = `
+
+        <div class="projects-loading">
+
+            <div class="loading-spinner"></div>
+
+            <p>
+                Loading projects...
+            </p>
+
+        </div>
+
+    `;
+
+
+    try {
+
+        const snapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "projects"
+                )
+            );
+
+
+        allProjects = [];
+
+
+        snapshot.forEach(
+            (documentSnapshot) => {
+
+                allProjects.push({
+
+                    id:
+                        documentSnapshot.id,
+
+                    ...documentSnapshot.data()
+
+                });
+
+            }
+        );
+
+
+        /* =================================================
+           SORT
+           ================================================= */
+
+        allProjects.sort(
+            (a, b) => {
+
+                const aTime =
+                    a.createdAt?.seconds ||
+                    0;
+
+                const bTime =
+                    b.createdAt?.seconds ||
+                    0;
+
+
+                return bTime - aTime;
+
+            }
+        );
+
+
+        renderProjects(
+            "all"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Projects loading error:",
+            error
+        );
+
+
+        projectsGrid.innerHTML = `
+
+            <div class="projects-error">
+
+                <div class="error-icon">
+                    ⚠️
+                </div>
+
+                <h3>
+                    Unable to load projects
+                </h3>
+
+                <p>
+                    Please try again later.
+                </p>
+
+            </div>
+
+        `;
 
     }
 
 }
 
 
-if (themeBtn) {
+/* =========================================================
+   RENDER PROJECTS
+   ========================================================= */
 
-    themeBtn.addEventListener("click", () => {
+function renderProjects(
+    selectedCategory = "all"
+) {
 
-        body.classList.toggle("light-mode");
+    if (!projectsGrid) {
+        return;
+    }
 
-        const isLight =
-            body.classList.contains("light-mode");
 
-        localStorage.setItem(
-            "portfolio-theme",
-            isLight ? "light" : "dark"
-        );
+    let filteredProjects =
+        allProjects;
 
-        themeBtn.textContent =
-            isLight ? "☾" : "☀";
 
-    });
+    if (
+        selectedCategory !==
+        "all"
+    ) {
+
+        filteredProjects =
+            allProjects.filter(
+                (project) => {
+
+                    return (
+                        project.category ===
+                        selectedCategory
+                    );
+
+                }
+            );
+
+    }
+
+
+    if (
+        filteredProjects.length ===
+        0
+    ) {
+
+        projectsGrid.innerHTML = `
+
+            <div class="projects-empty">
+
+                <div class="empty-icon">
+                    📂
+                </div>
+
+                <h3>
+                    No projects yet
+                </h3>
+
+                <p>
+                    Projects in this category
+                    will appear here.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    projectsGrid.innerHTML =
+        filteredProjects
+            .map(
+                createProjectCard
+            )
+            .join("");
+
+}
+
+
+/* =========================================================
+   CREATE PROJECT CARD
+   ========================================================= */
+
+function createProjectCard(
+    project
+) {
+
+    const title =
+        project.title ||
+        "Untitled Project";
+
+
+    const category =
+        project.category ||
+        "other";
+
+
+    const categoryName =
+        categoryNames[category] ||
+        category;
+
+
+    const description =
+        project.description ||
+        "";
+
+
+    const tools =
+        project.tools ||
+        "";
+
+
+    const status =
+        project.status ||
+        "Planned";
+
+
+    const imageUrl =
+        project.imageUrl ||
+        "";
+
+
+    const projectLink =
+        project.projectLink ||
+        "";
+
+
+    let imageHTML;
+
+
+    if (imageUrl) {
+
+        imageHTML = `
+
+            <img
+                src="${escapeHTML(imageUrl)}"
+                alt="${escapeHTML(title)}"
+                loading="lazy"
+                onerror="this.parentElement.innerHTML='<div class=&quot;project-image-placeholder&quot;>📁</div>';"
+            >
+
+        `;
+
+    } else {
+
+        imageHTML = `
+
+            <div
+                class="project-image-placeholder"
+            >
+                📁
+            </div>
+
+        `;
+
+    }
+
+
+    let linkHTML = "";
+
+
+    if (projectLink) {
+
+        linkHTML = `
+
+            <a
+                href="${escapeHTML(projectLink)}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="project-link"
+            >
+                View Project
+                ↗
+            </a>
+
+        `;
+
+    }
+
+
+    return `
+
+        <article
+            class="project-card"
+            data-category="${escapeHTML(category)}"
+        >
+
+            <div class="project-image">
+
+                ${imageHTML}
+
+            </div>
+
+
+            <div class="project-content">
+
+                <div class="project-meta">
+
+                    <span class="project-category">
+
+                        ${escapeHTML(
+                            categoryName
+                        )}
+
+                    </span>
+
+
+                    <span
+                        class="project-status"
+                    >
+
+                        ${escapeHTML(
+                            status
+                        )}
+
+                    </span>
+
+                </div>
+
+
+                <h3>
+
+                    ${escapeHTML(
+                        title
+                    )}
+
+                </h3>
+
+
+                <p>
+
+                    ${escapeHTML(
+                        description
+                    )}
+
+                </p>
+
+
+                ${
+                    tools
+                        ? `
+
+                            <div
+                                class="project-tools"
+                            >
+
+                                <strong>
+                                    Tools:
+                                </strong>
+
+                                ${escapeHTML(
+                                    tools
+                                )}
+
+                            </div>
+
+                        `
+                        : ""
+                }
+
+
+                ${
+                    linkHTML
+                        ? `
+
+                            <div
+                                class="project-actions"
+                            >
+
+                                ${linkHTML}
+
+                            </div>
+
+                        `
+                        : ""
+                }
+
+            </div>
+
+        </article>
+
+    `;
 
 }
 
 
 /* =========================================================
    PROJECT FILTER
-========================================================= */
+   ========================================================= */
 
-filterButtons.forEach((button) => {
+filterButtons.forEach(
+    (button) => {
 
-    button.addEventListener("click", () => {
+        button.addEventListener(
+            "click",
+            () => {
 
-        const filter =
-            button.dataset.filter;
+                filterButtons.forEach(
+                    (btn) => {
 
+                        btn.classList.remove(
+                            "active"
+                        );
 
-        filterButtons.forEach((btn) => {
-
-            btn.classList.remove("active");
-
-        });
-
-
-        button.classList.add("active");
-
-
-        projectCards.forEach((card) => {
-
-            const category =
-                card.dataset.category;
+                    }
+                );
 
 
-            if (
-                filter === "all" ||
-                category === filter
-            ) {
+                button.classList.add(
+                    "active"
+                );
 
-                card.classList.remove("hidden");
 
-            } else {
+                const category =
+                    button.dataset.filter ||
+                    "all";
 
-                card.classList.add("hidden");
+
+                renderProjects(
+                    category
+                );
 
             }
-
-        });
-
-    });
-
-});
-
-
-/* =========================================================
-   BACK TO TOP
-========================================================= */
-
-window.addEventListener("scroll", () => {
-
-    if (!backToTop) {
-        return;
-    }
-
-    if (window.scrollY > 500) {
-
-        backToTop.classList.add("show");
-
-    } else {
-
-        backToTop.classList.remove("show");
+        );
 
     }
-
-});
-
-
-if (backToTop) {
-
-    backToTop.addEventListener("click", () => {
-
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-        });
-
-    });
-
-}
-
-
-/* =========================================================
-   ACTIVE NAVIGATION
-========================================================= */
-
-const sections =
-    document.querySelectorAll("main section[id]");
-
-
-const updateActiveNavigation = () => {
-
-    let currentSection = "";
-
-    const scrollPosition =
-        window.scrollY + 150;
-
-
-    sections.forEach((section) => {
-
-        const sectionTop =
-            section.offsetTop;
-
-        const sectionHeight =
-            section.offsetHeight;
-
-        const sectionId =
-            section.getAttribute("id");
-
-
-        if (
-            scrollPosition >= sectionTop &&
-            scrollPosition < sectionTop + sectionHeight
-        ) {
-
-            currentSection = sectionId;
-
-        }
-
-    });
-
-
-    navLinks.forEach((link) => {
-
-        link.classList.remove("active");
-
-
-        const target =
-            link.getAttribute("href");
-
-
-        if (
-            target === `#${currentSection}`
-        ) {
-
-            link.classList.add("active");
-
-        }
-
-    });
-
-};
-
-
-window.addEventListener(
-    "scroll",
-    updateActiveNavigation
 );
 
-updateActiveNavigation();
-
 
 /* =========================================================
-   HEADER SCROLL EFFECT
-========================================================= */
+   SCROLL HEADER
+   ========================================================= */
 
 const header =
-    document.getElementById("header");
+    document.querySelector(
+        ".site-header"
+    );
 
 
-window.addEventListener("scroll", () => {
+function handleHeaderScroll() {
 
     if (!header) {
         return;
     }
 
 
-    if (window.scrollY > 30) {
+    if (
+        window.scrollY >
+        30
+    ) {
 
-        header.style.boxShadow =
-            "0 10px 35px rgba(0, 0, 0, 0.12)";
+        header.classList.add(
+            "scrolled"
+        );
 
     } else {
 
-        header.style.boxShadow =
-            "none";
+        header.classList.remove(
+            "scrolled"
+        );
 
     }
 
-});
+}
+
+
+window.addEventListener(
+    "scroll",
+    handleHeaderScroll
+);
+
+
+handleHeaderScroll();
 
 
 /* =========================================================
-   ESC KEY
-========================================================= */
+   ACTIVE NAVIGATION
+   ========================================================= */
 
-document.addEventListener("keydown", (event) => {
+const sectionsForNav =
+    document.querySelectorAll(
+        "main section[id]"
+    );
 
-    if (event.key === "Escape") {
 
-        if (navbar) {
+const navigationLinks =
+    document.querySelectorAll(
+        '.nav-links a[href^="#"]'
+    );
 
-            navbar.classList.remove("open");
+
+function updateActiveNav() {
+
+    let currentSection = "";
+
+
+    sectionsForNav.forEach(
+        (section) => {
+
+            const sectionTop =
+                section.offsetTop - 180;
+
+
+            if (
+                window.scrollY >=
+                sectionTop
+            ) {
+
+                currentSection =
+                    section.id;
+
+            }
 
         }
+    );
 
-        if (menuBtn) {
 
-            menuBtn.textContent = "☰";
+    navigationLinks.forEach(
+        (link) => {
+
+            link.classList.remove(
+                "active"
+            );
+
+
+            const href =
+                link.getAttribute(
+                    "href"
+                );
+
+
+            if (
+                href ===
+                `#${currentSection}`
+            ) {
+
+                link.classList.add(
+                    "active"
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+window.addEventListener(
+    "scroll",
+    updateActiveNav
+);
+
+
+/* =========================================================
+   BACK TO TOP
+   ========================================================= */
+
+function updateBackToTop() {
+
+    if (!backToTop) {
+        return;
+    }
+
+
+    if (
+        window.scrollY >
+        500
+    ) {
+
+        backToTop.classList.add(
+            "show"
+        );
+
+    } else {
+
+        backToTop.classList.remove(
+            "show"
+        );
+
+    }
+
+}
+
+
+window.addEventListener(
+    "scroll",
+    updateBackToTop
+);
+
+
+if (backToTop) {
+
+    backToTop.addEventListener(
+        "click",
+        () => {
+
+            window.scrollTo({
+
+                top: 0,
+
+                behavior: "smooth"
+
+            });
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   ESCAPE KEY
+   ========================================================= */
+
+document.addEventListener(
+    "keydown",
+    (event) => {
+
+        if (
+            event.key ===
+            "Escape"
+        ) {
+
+            navLinks?.classList.remove(
+                "active"
+            );
+
+            menuToggle?.classList.remove(
+                "active"
+            );
 
         }
 
     }
-
-});
+);
 
 
 /* =========================================================
-   CONSOLE MESSAGE
-========================================================= */
+   START
+   ========================================================= */
+
+loadProjects();
+
+
+/* =========================================================
+   CONSOLE
+   ========================================================= */
 
 console.log(
-    "Ahmed Samir Portfolio loaded successfully."
+    "Samir Portfolio loaded successfully."
 );
