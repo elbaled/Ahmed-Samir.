@@ -1,7 +1,7 @@
 /* =========================================================
    SAMIR PORTFOLIO - ADMIN DASHBOARD
+   FULL FIRESTORE CRUD VERSION
    Projects + Certificates + Authentication
-   Fixed to match current admin.html
    ========================================================= */
 
 "use strict";
@@ -44,7 +44,7 @@ const CERTIFICATES_COLLECTION =
 
 
 /* =========================================================
-   DOM ELEMENTS
+   DOM
    ========================================================= */
 
 const sidebar =
@@ -130,7 +130,14 @@ const modalBody =
 
 
 /* =========================================================
-   PAGE TITLES
+   STATE
+   ========================================================= */
+
+let currentAdminUser = null;
+
+
+/* =========================================================
+   SECTION TITLES
    ========================================================= */
 
 const SECTION_TITLES = {
@@ -175,7 +182,9 @@ function escapeHTML(value) {
         value === null ||
         value === undefined
     ) {
+
         return "";
+
     }
 
     return String(value)
@@ -184,6 +193,158 @@ function escapeHTML(value) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+
+}
+
+
+/* =========================================================
+   FIREBASE ERROR MESSAGE
+   ========================================================= */
+
+function getFirebaseErrorMessage(error) {
+
+    if (!error) {
+
+        return "خطأ غير معروف.";
+
+    }
+
+
+    const code =
+        error.code || "";
+
+    const message =
+        error.message || "";
+
+
+    console.error(
+        "Firebase Error Code:",
+        code
+    );
+
+    console.error(
+        "Firebase Error Message:",
+        message
+    );
+
+
+    if (
+        code ===
+        "permission-denied"
+    ) {
+
+        return (
+            "Firebase رفض العملية بسبب الصلاحيات.\n\n" +
+            "تأكد أن حساب الأدمن الحالي هو نفس UID:\n" +
+            ADMIN_UID +
+            "\n\n" +
+            "وتأكد أن Firestore Rules تم نشرها Publish."
+        );
+
+    }
+
+
+    if (
+        code ===
+        "unauthenticated"
+    ) {
+
+        return (
+            "المستخدم غير مسجل الدخول إلى Firebase."
+        );
+
+    }
+
+
+    if (
+        code ===
+        "not-found"
+    ) {
+
+        return (
+            "المستند المطلوب غير موجود."
+        );
+
+    }
+
+
+    if (
+        code ===
+        "invalid-argument"
+    ) {
+
+        return (
+            "هناك بيانات غير صحيحة تم إرسالها إلى Firebase."
+        );
+
+    }
+
+
+    return message || "حدث خطأ غير معروف في Firebase.";
+
+}
+
+
+/* =========================================================
+   ADMIN CHECK
+   ========================================================= */
+
+function checkAdmin() {
+
+    const user =
+        auth.currentUser;
+
+
+    console.log(
+        "Current Firebase User:",
+        user
+    );
+
+
+    if (!user) {
+
+        alert(
+            "أنت غير مسجل الدخول في Firebase.\n\nسيتم إعادتك لصفحة تسجيل الدخول."
+        );
+
+        window.location.href =
+            "login.html";
+
+        return false;
+
+    }
+
+
+    console.log(
+        "Current UID:",
+        user.uid
+    );
+
+    console.log(
+        "Required Admin UID:",
+        ADMIN_UID
+    );
+
+
+    if (
+        user.uid !==
+        ADMIN_UID
+    ) {
+
+        alert(
+            "هذا الحساب ليس حساب الأدمن."
+        );
+
+        return false;
+
+    }
+
+
+    currentAdminUser =
+        user;
+
+
+    return true;
 
 }
 
@@ -201,6 +362,7 @@ function openSidebar() {
         );
 
     }
+
 
     if (sidebarOverlay) {
 
@@ -222,6 +384,7 @@ function closeSidebar() {
         );
 
     }
+
 
     if (sidebarOverlay) {
 
@@ -261,7 +424,9 @@ if (sidebarOverlay) {
 function showSection(sectionName) {
 
     if (!sectionName) {
+
         return;
+
     }
 
 
@@ -331,10 +496,6 @@ function showSection(sectionName) {
     closeSidebar();
 
 
-    /* -----------------------------------------
-       Load section data
-       ----------------------------------------- */
-
     if (
         sectionName ===
         "projects"
@@ -391,6 +552,7 @@ navItems.forEach(
                 const sectionName =
                     item.dataset.section;
 
+
                 if (sectionName) {
 
                     showSection(
@@ -407,7 +569,7 @@ navItems.forEach(
 
 
 /* =========================================================
-   QUICK ACTION EVENTS
+   QUICK ACTIONS
    ========================================================= */
 
 document
@@ -424,8 +586,11 @@ document
                     const sectionName =
                         button.dataset.section;
 
+
                     if (!sectionName) {
+
                         return;
+
                     }
 
 
@@ -492,7 +657,7 @@ document
 
 
 /* =========================================================
-   EMPTY STATE ACTION BUTTONS
+   DATA ACTION EVENTS
    ========================================================= */
 
 document.addEventListener(
@@ -506,7 +671,9 @@ document.addEventListener(
 
 
         if (!button) {
+
             return;
+
         }
 
 
@@ -558,7 +725,7 @@ document.addEventListener(
 
 
 /* =========================================================
-   VIEW WEBSITE
+   WEBSITE
    ========================================================= */
 
 function openWebsite() {
@@ -606,7 +773,9 @@ if (logoutButton) {
 
 
             if (!confirmed) {
+
                 return;
+
             }
 
 
@@ -620,7 +789,6 @@ if (logoutButton) {
                 window.location.href =
                     "login.html";
 
-
             } catch (error) {
 
                 console.error(
@@ -630,7 +798,9 @@ if (logoutButton) {
 
 
                 alert(
-                    "حدث خطأ أثناء تسجيل الخروج."
+                    getFirebaseErrorMessage(
+                        error
+                    )
                 );
 
             }
@@ -651,7 +821,9 @@ function openModal(
 ) {
 
     if (!modal) {
+
         return;
+
     }
 
 
@@ -692,7 +864,9 @@ function openModal(
 function closeModal() {
 
     if (!modal) {
+
         return;
+
     }
 
 
@@ -766,20 +940,26 @@ function getProjectFormHTML(
     const title =
         project?.title || "";
 
+
     const category =
         project?.category || "gis";
+
 
     const description =
         project?.description || "";
 
+
     const tools =
         project?.tools || "";
+
 
     const status =
         project?.status || "Planned";
 
+
     const projectLink =
         project?.projectLink || "";
+
 
     const imageUrl =
         project?.imageUrl || "";
@@ -1031,6 +1211,7 @@ function getProjectFormHTML(
                 <button
                     type="submit"
                     class="btn-primary"
+                    id="saveProjectBtn"
                 >
                     ${
                         isEdit
@@ -1053,6 +1234,13 @@ function getProjectFormHTML(
    ========================================================= */
 
 function openAddProjectModal() {
+
+    if (!checkAdmin()) {
+
+        return;
+
+    }
+
 
     openModal(
         "إضافة مشروع جديد",
@@ -1104,7 +1292,13 @@ function attachProjectFormEvents() {
 
 
     if (!form) {
+
+        console.error(
+            "Project form was not found."
+        );
+
         return;
+
     }
 
 
@@ -1113,6 +1307,10 @@ function attachProjectFormEvents() {
         async (event) => {
 
             event.preventDefault();
+
+            console.log(
+                "Project form submitted."
+            );
 
             await saveProject();
 
@@ -1127,6 +1325,18 @@ function attachProjectFormEvents() {
    ========================================================= */
 
 async function saveProject() {
+
+    console.log(
+        "========== SAVE PROJECT =========="
+    );
+
+
+    if (!checkAdmin()) {
+
+        return;
+
+    }
+
 
     const id =
         document.getElementById(
@@ -1176,6 +1386,21 @@ async function saveProject() {
         )?.value.trim() || "";
 
 
+    console.log(
+        "Project data:",
+        {
+            id,
+            title,
+            category,
+            description,
+            tools,
+            status,
+            imageUrl,
+            projectLink
+        }
+    );
+
+
     if (!title) {
 
         alert(
@@ -1200,19 +1425,26 @@ async function saveProject() {
 
     const data = {
 
-        title,
+        title:
+            title,
 
-        category,
+        category:
+            category,
 
-        description,
+        description:
+            description,
 
-        tools,
+        tools:
+            tools,
 
-        status,
+        status:
+            status,
 
-        imageUrl,
+        imageUrl:
+            imageUrl,
 
-        projectLink,
+        projectLink:
+            projectLink,
 
         updatedAt:
             serverTimestamp()
@@ -1222,7 +1454,44 @@ async function saveProject() {
 
     try {
 
+        const user =
+            auth.currentUser;
+
+
+        console.log(
+            "Writing with UID:",
+            user?.uid
+        );
+
+
+        if (!user) {
+
+            throw new Error(
+                "Firebase Auth user is missing."
+            );
+
+        }
+
+
+        if (
+            user.uid !==
+            ADMIN_UID
+        ) {
+
+            throw new Error(
+                "Current user is not the authorized admin."
+            );
+
+        }
+
+
         if (id) {
+
+            console.log(
+                "Updating project:",
+                id
+            );
+
 
             await updateDoc(
                 doc(
@@ -1234,22 +1503,39 @@ async function saveProject() {
             );
 
 
+            console.log(
+                "Project updated successfully."
+            );
+
+
             alert(
                 "تم تعديل المشروع بنجاح."
             );
 
         } else {
 
+            console.log(
+                "Adding new project..."
+            );
+
+
             data.createdAt =
                 serverTimestamp();
 
 
-            await addDoc(
-                collection(
-                    db,
-                    PROJECTS_COLLECTION
-                ),
-                data
+            const newDocument =
+                await addDoc(
+                    collection(
+                        db,
+                        PROJECTS_COLLECTION
+                    ),
+                    data
+                );
+
+
+            console.log(
+                "New project ID:",
+                newDocument.id
             );
 
 
@@ -1262,7 +1548,9 @@ async function saveProject() {
 
         closeModal();
 
+
         await loadProjects();
+
 
         await updateDashboardStats();
 
@@ -1270,14 +1558,16 @@ async function saveProject() {
     } catch (error) {
 
         console.error(
-            "Save project error:",
+            "SAVE PROJECT ERROR:",
             error
         );
 
 
         alert(
-            "حدث خطأ أثناء حفظ المشروع:\n\n" +
-            error.message
+            "فشل حفظ المشروع.\n\n" +
+            getFirebaseErrorMessage(
+                error
+            )
         );
 
     }
@@ -1292,7 +1582,9 @@ async function saveProject() {
 async function loadProjects() {
 
     if (!projectsContainer) {
+
         return;
+
     }
 
 
@@ -1412,7 +1704,7 @@ async function loadProjects() {
     } catch (error) {
 
         console.error(
-            "Load projects error:",
+            "LOAD PROJECTS ERROR:",
             error
         );
 
@@ -1431,7 +1723,9 @@ async function loadProjects() {
 
                 <p>
                     ${escapeHTML(
-                        error.message
+                        getFirebaseErrorMessage(
+                            error
+                        )
                     )}
                 </p>
 
@@ -1697,6 +1991,24 @@ async function editProject(
     projectId
 ) {
 
+    if (!checkAdmin()) {
+
+        return;
+
+    }
+
+
+    if (!projectId) {
+
+        alert(
+            "معرف المشروع غير موجود."
+        );
+
+        return;
+
+    }
+
+
     try {
 
         const snapshot =
@@ -1760,13 +2072,16 @@ async function editProject(
     } catch (error) {
 
         console.error(
-            "Edit project error:",
+            "EDIT PROJECT ERROR:",
             error
         );
 
 
         alert(
-            "حدث خطأ أثناء تحميل المشروع."
+            "حدث خطأ أثناء تحميل المشروع.\n\n" +
+            getFirebaseErrorMessage(
+                error
+            )
         );
 
     }
@@ -1782,18 +2097,44 @@ async function deleteProject(
     projectId
 ) {
 
+    if (!checkAdmin()) {
+
+        return;
+
+    }
+
+
+    if (!projectId) {
+
+        alert(
+            "معرف المشروع غير موجود."
+        );
+
+        return;
+
+    }
+
+
     const confirmed =
         confirm(
-            "هل أنت متأكد من حذف المشروع؟"
+            "هل أنت متأكد من حذف المشروع؟\n\nلا يمكن التراجع عن هذه العملية."
         );
 
 
     if (!confirmed) {
+
         return;
+
     }
 
 
     try {
+
+        console.log(
+            "Deleting project:",
+            projectId
+        );
+
 
         await deleteDoc(
             doc(
@@ -1804,12 +2145,18 @@ async function deleteProject(
         );
 
 
+        console.log(
+            "Project deleted successfully."
+        );
+
+
         alert(
-            "تم حذف المشروع."
+            "تم حذف المشروع بنجاح."
         );
 
 
         await loadProjects();
+
 
         await updateDashboardStats();
 
@@ -1817,14 +2164,16 @@ async function deleteProject(
     } catch (error) {
 
         console.error(
-            "Delete project error:",
+            "DELETE PROJECT ERROR:",
             error
         );
 
 
         alert(
-            "حدث خطأ أثناء الحذف:\n\n" +
-            error.message
+            "فشل حذف المشروع.\n\n" +
+            getFirebaseErrorMessage(
+                error
+            )
         );
 
     }
@@ -1987,14 +2336,13 @@ function getCertificateFormHTML(
                 <button
                     type="submit"
                     class="btn-primary"
+                    id="saveCertificateBtn"
                 >
-
                     ${
                         isEdit
                             ? "حفظ التعديلات"
                             : "إضافة الشهادة"
                     }
-
                 </button>
 
             </div>
@@ -2011,6 +2359,13 @@ function getCertificateFormHTML(
    ========================================================= */
 
 function openAddCertificateModal() {
+
+    if (!checkAdmin()) {
+
+        return;
+
+    }
+
 
     openModal(
         "إضافة شهادة جديدة",
@@ -2062,7 +2417,13 @@ function attachCertificateFormEvents() {
 
 
     if (!form) {
+
+        console.error(
+            "Certificate form was not found."
+        );
+
         return;
+
     }
 
 
@@ -2071,6 +2432,10 @@ function attachCertificateFormEvents() {
         async (event) => {
 
             event.preventDefault();
+
+            console.log(
+                "Certificate form submitted."
+            );
 
             await saveCertificate();
 
@@ -2085,6 +2450,18 @@ function attachCertificateFormEvents() {
    ========================================================= */
 
 async function saveCertificate() {
+
+    console.log(
+        "========== SAVE CERTIFICATE =========="
+    );
+
+
+    if (!checkAdmin()) {
+
+        return;
+
+    }
+
 
     const id =
         document.getElementById(
@@ -2152,17 +2529,23 @@ async function saveCertificate() {
 
     const data = {
 
-        title,
+        title:
+            title,
 
-        issuer,
+        issuer:
+            issuer,
 
-        date,
+        date:
+            date,
 
-        description,
+        description:
+            description,
 
-        imageUrl,
+        imageUrl:
+            imageUrl,
 
-        certificateUrl,
+        certificateUrl:
+            certificateUrl,
 
         updatedAt:
             serverTimestamp()
@@ -2171,6 +2554,31 @@ async function saveCertificate() {
 
 
     try {
+
+        const user =
+            auth.currentUser;
+
+
+        if (!user) {
+
+            throw new Error(
+                "Firebase Auth user is missing."
+            );
+
+        }
+
+
+        if (
+            user.uid !==
+            ADMIN_UID
+        ) {
+
+            throw new Error(
+                "Current user is not the authorized admin."
+            );
+
+        }
+
 
         if (id) {
 
@@ -2194,12 +2602,19 @@ async function saveCertificate() {
                 serverTimestamp();
 
 
-            await addDoc(
-                collection(
-                    db,
-                    CERTIFICATES_COLLECTION
-                ),
-                data
+            const newDocument =
+                await addDoc(
+                    collection(
+                        db,
+                        CERTIFICATES_COLLECTION
+                    ),
+                    data
+                );
+
+
+            console.log(
+                "New certificate ID:",
+                newDocument.id
             );
 
 
@@ -2212,7 +2627,9 @@ async function saveCertificate() {
 
         closeModal();
 
+
         await loadCertificates();
+
 
         await updateDashboardStats();
 
@@ -2220,14 +2637,16 @@ async function saveCertificate() {
     } catch (error) {
 
         console.error(
-            "Save certificate error:",
+            "SAVE CERTIFICATE ERROR:",
             error
         );
 
 
         alert(
-            "حدث خطأ أثناء حفظ الشهادة:\n\n" +
-            error.message
+            "فشل حفظ الشهادة.\n\n" +
+            getFirebaseErrorMessage(
+                error
+            )
         );
 
     }
@@ -2242,7 +2661,9 @@ async function saveCertificate() {
 async function loadCertificates() {
 
     if (!certificatesContainer) {
+
         return;
+
     }
 
 
@@ -2362,7 +2783,7 @@ async function loadCertificates() {
     } catch (error) {
 
         console.error(
-            "Load certificates error:",
+            "LOAD CERTIFICATES ERROR:",
             error
         );
 
@@ -2381,7 +2802,9 @@ async function loadCertificates() {
 
                 <p>
                     ${escapeHTML(
-                        error.message
+                        getFirebaseErrorMessage(
+                            error
+                        )
                     )}
                 </p>
 
@@ -2607,6 +3030,24 @@ async function editCertificate(
     certificateId
 ) {
 
+    if (!checkAdmin()) {
+
+        return;
+
+    }
+
+
+    if (!certificateId) {
+
+        alert(
+            "معرف الشهادة غير موجود."
+        );
+
+        return;
+
+    }
+
+
     try {
 
         const snapshot =
@@ -2670,13 +3111,16 @@ async function editCertificate(
     } catch (error) {
 
         console.error(
-            "Edit certificate error:",
+            "EDIT CERTIFICATE ERROR:",
             error
         );
 
 
         alert(
-            "حدث خطأ أثناء تحميل الشهادة."
+            "حدث خطأ أثناء تحميل الشهادة.\n\n" +
+            getFirebaseErrorMessage(
+                error
+            )
         );
 
     }
@@ -2692,14 +3136,34 @@ async function deleteCertificate(
     certificateId
 ) {
 
+    if (!checkAdmin()) {
+
+        return;
+
+    }
+
+
+    if (!certificateId) {
+
+        alert(
+            "معرف الشهادة غير موجود."
+        );
+
+        return;
+
+    }
+
+
     const confirmed =
         confirm(
-            "هل أنت متأكد من حذف هذه الشهادة؟"
+            "هل أنت متأكد من حذف هذه الشهادة؟\n\nلا يمكن التراجع عن هذه العملية."
         );
 
 
     if (!confirmed) {
+
         return;
+
     }
 
 
@@ -2721,20 +3185,23 @@ async function deleteCertificate(
 
         await loadCertificates();
 
+
         await updateDashboardStats();
 
 
     } catch (error) {
 
         console.error(
-            "Delete certificate error:",
+            "DELETE CERTIFICATE ERROR:",
             error
         );
 
 
         alert(
-            "حدث خطأ أثناء حذف الشهادة:\n\n" +
-            error.message
+            "فشل حذف الشهادة.\n\n" +
+            getFirebaseErrorMessage(
+                error
+            )
         );
 
     }
@@ -2749,7 +3216,9 @@ async function deleteCertificate(
 function showCoursesPlaceholder() {
 
     if (!coursesContainer) {
+
         return;
+
     }
 
 
@@ -2766,7 +3235,8 @@ function showCoursesPlaceholder() {
             </h3>
 
             <p>
-                قسم الكورسات جاهز في لوحة التحكم، وسيتم ربطه بـ Firestore في الخطوة التالية.
+                قسم الكورسات جاهز في لوحة التحكم،
+                وسيتم ربطه بـ Firestore لاحقًا.
             </p>
 
             <button
@@ -2800,7 +3270,7 @@ function openCourseComingSoon() {
                 </h3>
 
                 <p>
-                    سنربط الكورسات بـ Firestore في الخطوة التالية.
+                    إدارة الكورسات سيتم ربطها بـ Firestore في الخطوة التالية.
                 </p>
 
             </div>
@@ -2827,7 +3297,9 @@ if (addCourseButton) {
 function showSkillsPlaceholder() {
 
     if (!skillsContainer) {
+
         return;
+
     }
 
 
@@ -2844,7 +3316,7 @@ function showSkillsPlaceholder() {
             </h3>
 
             <p>
-                إدارة المهارات سيتم ربطها بـ Firestore في الخطوة التالية.
+                إدارة المهارات سيتم ربطها بـ Firestore لاحقًا.
             </p>
 
             <button
@@ -2878,7 +3350,7 @@ function openSkillComingSoon() {
                 </h3>
 
                 <p>
-                    سنربط المهارات بـ Firestore في الخطوة التالية.
+                    إدارة المهارات سيتم ربطها بـ Firestore في الخطوة التالية.
                 </p>
 
             </div>
@@ -2959,7 +3431,7 @@ async function updateDashboardStats() {
     } catch (error) {
 
         console.error(
-            "Dashboard stats error:",
+            "DASHBOARD STATS ERROR:",
             error
         );
 
@@ -2976,23 +3448,16 @@ onAuthStateChanged(
     auth,
     async (user) => {
 
+        console.log(
+            "Auth state changed:",
+            user
+        );
+
+
         if (!user) {
 
-            window.location.href =
-                "login.html";
-
-            return;
-
-        }
-
-
-        if (
-            user.uid !==
-            ADMIN_UID
-        ) {
-
-            await signOut(
-                auth
+            console.warn(
+                "No Firebase user."
             );
 
 
@@ -3005,14 +3470,64 @@ onAuthStateChanged(
 
 
         console.log(
-            "Admin authenticated:",
-            user.email
+            "Logged user UID:",
+            user.uid
+        );
+
+
+        console.log(
+            "Expected admin UID:",
+            ADMIN_UID
+        );
+
+
+        if (
+            user.uid !==
+            ADMIN_UID
+        ) {
+
+            alert(
+                "هذا الحساب غير مصرح له بالدخول إلى لوحة الأدمن."
+            );
+
+
+            try {
+
+                await signOut(
+                    auth
+                );
+
+            } catch (error) {
+
+                console.error(
+                    error
+                );
+
+            }
+
+
+            window.location.href =
+                "login.html";
+
+            return;
+
+        }
+
+
+        currentAdminUser =
+            user;
+
+
+        console.log(
+            "ADMIN AUTHENTICATED SUCCESSFULLY"
         );
 
 
         await updateDashboardStats();
 
+
         await loadProjects();
+
 
         await loadCertificates();
 
@@ -3034,5 +3549,18 @@ showSection(
    ========================================================= */
 
 console.log(
+    "========================================"
+);
+
+console.log(
     "Samir Portfolio Admin loaded successfully."
+);
+
+console.log(
+    "Admin UID:",
+    ADMIN_UID
+);
+
+console.log(
+    "========================================"
 );
