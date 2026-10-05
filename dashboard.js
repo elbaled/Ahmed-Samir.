@@ -1,30 +1,21 @@
 /* =========================================================
-   AHMED SAMIR PORTFOLIO
-   ADMIN DASHBOARD
-   Main Dashboard JavaScript
+   Ahmed Samir Portfolio - Admin Dashboard
+   Firebase Authentication Protected
    ========================================================= */
 
 "use strict";
 
 
+import {
+    auth,
+    onAuthStateChanged,
+    signOut
+} from "./firebase.js";
+
+
 /* =========================================================
-   01. DOM ELEMENTS
+   DOM ELEMENTS
    ========================================================= */
-
-const sidebar =
-    document.getElementById("sidebar");
-
-const sidebarOverlay =
-    document.getElementById("sidebarOverlay");
-
-const menuButton =
-    document.getElementById("menuButton");
-
-const visitSiteButton =
-    document.getElementById("visitSiteButton");
-
-const logoutButton =
-    document.getElementById("logoutButton");
 
 const pageTitle =
     document.getElementById("pageTitle");
@@ -33,17 +24,53 @@ const pageSubtitle =
     document.getElementById("pageSubtitle");
 
 const navItems =
-    document.querySelectorAll(".nav-item");
+    document.querySelectorAll(".nav-item[data-section]");
 
-const dashboardSections =
+const sections =
     document.querySelectorAll(".dashboard-section");
 
 const quickActions =
-    document.querySelectorAll(".quick-action");
+    document.querySelectorAll(".quick-action[data-section]");
+
+const menuButton =
+    document.getElementById("menuButton");
+
+const sidebar =
+    document.querySelector(".sidebar");
+
+const sidebarOverlay =
+    document.getElementById("sidebarOverlay");
+
+const visitSiteButton =
+    document.getElementById("visitSiteButton");
+
+const logoutButton =
+    document.getElementById("logoutButton");
+
+const addProjectButton =
+    document.getElementById("addProjectButton");
+
+const emptyAddProjectButton =
+    document.getElementById("emptyAddProjectButton");
+
+const addCertificateButton =
+    document.getElementById("addCertificateButton");
+
+const emptyAddCertificateButton =
+    document.getElementById("emptyAddCertificateButton");
+
+const addSkillButton =
+    document.getElementById("addSkillButton");
+
+const emptyAddSkillButton =
+    document.getElementById("emptyAddSkillButton");
+
+const saveProfileButton =
+    document.getElementById("saveProfileButton");
 
 
 /* =========================================================
-   02. SECTION INFORMATION
+   SECTION DATA
    ========================================================= */
 
 const sectionData = {
@@ -53,7 +80,7 @@ const sectionData = {
         title: "Dashboard",
 
         subtitle:
-            "Welcome to your portfolio control panel."
+            "Overview of your portfolio website."
 
     },
 
@@ -62,7 +89,7 @@ const sectionData = {
         title: "Projects",
 
         subtitle:
-            "Add and manage your portfolio projects."
+            "Manage your portfolio projects."
 
     },
 
@@ -71,7 +98,7 @@ const sectionData = {
         title: "Certificates",
 
         subtitle:
-            "Manage your certificates and training records."
+            "Manage your certificates and achievements."
 
     },
 
@@ -89,7 +116,7 @@ const sectionData = {
         title: "Profile",
 
         subtitle:
-            "Manage the information displayed on your portfolio."
+            "Manage your personal portfolio information."
 
     }
 
@@ -97,16 +124,108 @@ const sectionData = {
 
 
 /* =========================================================
-   03. CHANGE SECTION
+   AUTHENTICATION
+   ========================================================= */
+
+let currentUser = null;
+
+
+/*
+    Firebase checks whether the user is already signed in.
+
+    If there is no authenticated user:
+    → redirect to login.html
+
+    If the user is authenticated:
+    → allow dashboard to continue
+*/
+
+onAuthStateChanged(
+    auth,
+    (user) => {
+
+        if (!user) {
+
+            window.location.replace(
+                "login.html"
+            );
+
+            return;
+        }
+
+
+        currentUser = user;
+
+
+        console.log(
+            "Authenticated user:",
+            currentUser.email
+        );
+
+
+        updateAdminInformation(
+            currentUser
+        );
+
+    }
+);
+
+
+/* =========================================================
+   UPDATE ADMIN INFORMATION
+   ========================================================= */
+
+function updateAdminInformation(user) {
+
+    /*
+        The current dashboard contains
+        static admin information.
+
+        We update the visible email
+        when possible without changing
+        the existing dashboard structure.
+    */
+
+    const adminEmailElements =
+        document.querySelectorAll(
+            "[data-admin-email]"
+        );
+
+
+    adminEmailElements.forEach(
+        (element) => {
+
+            element.textContent =
+                user.email || "Administrator";
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   SHOW SECTION
    ========================================================= */
 
 function showSection(sectionName) {
 
-    if (!sectionName) {
+    if (!sectionData[sectionName]) {
 
-        return;
+        sectionName = "dashboard";
 
     }
+
+
+    sections.forEach(
+        (section) => {
+
+            section.classList.remove(
+                "active"
+            );
+
+        }
+    );
 
 
     const targetSection =
@@ -115,78 +234,51 @@ function showSection(sectionName) {
         );
 
 
-    if (!targetSection) {
+    if (targetSection) {
 
-        console.warn(
-            `Section "${sectionName}" was not found.`
+        targetSection.classList.add(
+            "active"
         );
-
-        return;
 
     }
 
 
-    /* -----------------------------------------
-       Hide all sections
-    ----------------------------------------- */
-
-    dashboardSections.forEach(
-        section => {
-
-            section.classList.remove(
-                "active-section"
-            );
-
-        }
-    );
-
-
-    /* -----------------------------------------
-       Show selected section
-    ----------------------------------------- */
-
-    targetSection.classList.add(
-        "active-section"
-    );
-
-
-    /* -----------------------------------------
-       Update navigation
-    ----------------------------------------- */
-
     navItems.forEach(
-        item => {
-
-            const itemSection =
-                item.dataset.section;
+        (item) => {
 
             item.classList.toggle(
                 "active",
-                itemSection === sectionName
+                item.dataset.section ===
+                sectionName
             );
 
         }
     );
 
 
-    /* -----------------------------------------
-       Update topbar
-    ----------------------------------------- */
+    const data =
+        sectionData[sectionName];
 
-    if (sectionData[sectionName]) {
+
+    if (pageTitle) {
 
         pageTitle.textContent =
-            sectionData[sectionName].title;
-
-        pageSubtitle.textContent =
-            sectionData[sectionName].subtitle;
+            data.title;
 
     }
 
 
-    /* -----------------------------------------
-       Update URL hash
-    ----------------------------------------- */
+    if (pageSubtitle) {
+
+        pageSubtitle.textContent =
+            data.subtitle;
+
+    }
+
+
+    /*
+        Update URL hash.
+    */
 
     if (
         window.location.hash !==
@@ -202,38 +294,27 @@ function showSection(sectionName) {
     }
 
 
-    /* -----------------------------------------
-       Close mobile sidebar
-    ----------------------------------------- */
-
     closeMobileSidebar();
 
 
-    /* -----------------------------------------
-       Scroll to top
-    ----------------------------------------- */
-
     window.scrollTo({
-
         top: 0,
-
         behavior: "smooth"
-
     });
 
 }
 
 
 /* =========================================================
-   04. NAVIGATION CLICK EVENTS
+   NAVIGATION
    ========================================================= */
 
 navItems.forEach(
-    item => {
+    (item) => {
 
         item.addEventListener(
             "click",
-            event => {
+            (event) => {
 
                 event.preventDefault();
 
@@ -254,18 +335,18 @@ navItems.forEach(
 
 
 /* =========================================================
-   05. QUICK ACTION BUTTONS
+   QUICK ACTIONS
    ========================================================= */
 
 quickActions.forEach(
-    button => {
+    (action) => {
 
-        button.addEventListener(
+        action.addEventListener(
             "click",
             () => {
 
                 const sectionName =
-                    button.dataset.section;
+                    action.dataset.section;
 
 
                 showSection(
@@ -280,21 +361,18 @@ quickActions.forEach(
 
 
 /* =========================================================
-   06. MOBILE SIDEBAR
+   MOBILE SIDEBAR
    ========================================================= */
 
 function openMobileSidebar() {
 
-    if (!sidebar) {
+    if (sidebar) {
 
-        return;
+        sidebar.classList.add(
+            "mobile-open"
+        );
 
     }
-
-
-    sidebar.classList.add(
-        "mobile-open"
-    );
 
 
     if (sidebarOverlay) {
@@ -305,25 +383,18 @@ function openMobileSidebar() {
 
     }
 
-
-    document.body.style.overflow =
-        "hidden";
-
 }
 
 
 function closeMobileSidebar() {
 
-    if (!sidebar) {
+    if (sidebar) {
 
-        return;
+        sidebar.classList.remove(
+            "mobile-open"
+        );
 
     }
-
-
-    sidebar.classList.remove(
-        "mobile-open"
-    );
 
 
     if (sidebarOverlay) {
@@ -334,16 +405,8 @@ function closeMobileSidebar() {
 
     }
 
-
-    document.body.style.overflow =
-        "";
-
 }
 
-
-/* =========================================================
-   07. MENU BUTTON
-   ========================================================= */
 
 if (menuButton) {
 
@@ -351,17 +414,18 @@ if (menuButton) {
         "click",
         () => {
 
-            const isOpen =
+            if (
+                sidebar &&
                 sidebar.classList.contains(
                     "mobile-open"
-                );
-
-
-            if (isOpen) {
+                )
+            ) {
 
                 closeMobileSidebar();
 
-            } else {
+            }
+
+            else {
 
                 openMobileSidebar();
 
@@ -373,35 +437,25 @@ if (menuButton) {
 }
 
 
-/* =========================================================
-   08. SIDEBAR OVERLAY
-   ========================================================= */
-
 if (sidebarOverlay) {
 
     sidebarOverlay.addEventListener(
         "click",
-        () => {
-
-            closeMobileSidebar();
-
-        }
+        closeMobileSidebar
     );
 
 }
 
 
 /* =========================================================
-   09. ESCAPE KEY
+   ESCAPE KEY
    ========================================================= */
 
 document.addEventListener(
     "keydown",
-    event => {
+    (event) => {
 
-        if (
-            event.key === "Escape"
-        ) {
+        if (event.key === "Escape") {
 
             closeMobileSidebar();
 
@@ -412,7 +466,25 @@ document.addEventListener(
 
 
 /* =========================================================
-   10. VISIT WEBSITE
+   RESIZE
+   ========================================================= */
+
+window.addEventListener(
+    "resize",
+    () => {
+
+        if (window.innerWidth > 850) {
+
+            closeMobileSidebar();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   VISIT WEBSITE
    ========================================================= */
 
 if (visitSiteButton) {
@@ -421,17 +493,8 @@ if (visitSiteButton) {
         "click",
         () => {
 
-            /*
-             * Replace this URL later if the
-             * portfolio URL changes.
-             */
-
-            const portfolioURL =
-                "https://elbaled.github.io/AHMED-SAMIR-/";
-
-
             window.open(
-                portfolioURL,
+                "https://elbaled.github.io/AHMED-SAMIR-/",
                 "_blank",
                 "noopener,noreferrer"
             );
@@ -443,42 +506,52 @@ if (visitSiteButton) {
 
 
 /* =========================================================
-   11. LOGOUT
+   LOGOUT
    ========================================================= */
 
 if (logoutButton) {
 
     logoutButton.addEventListener(
         "click",
-        () => {
+        async () => {
 
-            /*
-             * Firebase logout will be added
-             * in the Firebase integration step.
-             */
-
-            const shouldLogout =
+            const confirmed =
                 window.confirm(
-                    "Are you sure you want to logout?"
+                    "Are you sure you want to sign out?"
                 );
 
 
-            if (!shouldLogout) {
+            if (!confirmed) {
 
                 return;
 
             }
 
 
-            /*
-             * Temporary logout behavior.
-             *
-             * Firebase authentication will replace
-             * this behavior later.
-             */
+            try {
 
-            window.location.href =
-                "login.html";
+                await signOut(auth);
+
+
+                window.location.replace(
+                    "login.html"
+                );
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Logout error:",
+                    error
+                );
+
+
+                alert(
+                    "Unable to sign out. Please try again."
+                );
+
+            }
 
         }
     );
@@ -487,34 +560,15 @@ if (logoutButton) {
 
 
 /* =========================================================
-   12. ADD PROJECT BUTTONS
+   PROJECT BUTTONS
    ========================================================= */
 
-const addProjectButton =
-    document.getElementById(
-        "addProjectButton"
-    );
+function handleProjectButton() {
 
-const emptyAddProjectButton =
-    document.getElementById(
-        "emptyAddProjectButton"
-    );
+    showSection("projects");
 
-
-function openProjectManager() {
-
-    showSection(
-        "projects"
-    );
-
-
-    /*
-     * The project modal/form will be added
-     * during the Firebase + Cloudinary step.
-     */
-
-    console.log(
-        "Project manager will be connected to Firebase and Cloudinary."
+    alert(
+        "Project management will be connected to Firestore in the next step."
     );
 
 }
@@ -524,7 +578,7 @@ if (addProjectButton) {
 
     addProjectButton.addEventListener(
         "click",
-        openProjectManager
+        handleProjectButton
     );
 
 }
@@ -534,41 +588,22 @@ if (emptyAddProjectButton) {
 
     emptyAddProjectButton.addEventListener(
         "click",
-        openProjectManager
+        handleProjectButton
     );
 
 }
 
 
 /* =========================================================
-   13. ADD CERTIFICATE BUTTONS
+   CERTIFICATE BUTTONS
    ========================================================= */
 
-const addCertificateButton =
-    document.getElementById(
-        "addCertificateButton"
-    );
+function handleCertificateButton() {
 
-const emptyAddCertificateButton =
-    document.getElementById(
-        "emptyAddCertificateButton"
-    );
+    showSection("certificates");
 
-
-function openCertificateManager() {
-
-    showSection(
-        "certificates"
-    );
-
-
-    /*
-     * Certificate form will be added
-     * later with Firebase.
-     */
-
-    console.log(
-        "Certificate manager will be connected to Firebase."
+    alert(
+        "Certificate management will be connected to Firestore in the next step."
     );
 
 }
@@ -578,7 +613,7 @@ if (addCertificateButton) {
 
     addCertificateButton.addEventListener(
         "click",
-        openCertificateManager
+        handleCertificateButton
     );
 
 }
@@ -588,40 +623,22 @@ if (emptyAddCertificateButton) {
 
     emptyAddCertificateButton.addEventListener(
         "click",
-        openCertificateManager
+        handleCertificateButton
     );
 
 }
 
 
 /* =========================================================
-   14. ADD SKILL BUTTONS
+   SKILL BUTTONS
    ========================================================= */
 
-const addSkillButton =
-    document.getElementById(
-        "addSkillButton"
-    );
+function handleSkillButton() {
 
-const emptyAddSkillButton =
-    document.getElementById(
-        "emptyAddSkillButton"
-    );
+    showSection("skills");
 
-
-function openSkillManager() {
-
-    showSection(
-        "skills"
-    );
-
-
-    /*
-     * Skill form will be added later.
-     */
-
-    console.log(
-        "Skill manager will be connected to Firebase."
+    alert(
+        "Skill management will be connected to Firestore in the next step."
     );
 
 }
@@ -631,7 +648,7 @@ if (addSkillButton) {
 
     addSkillButton.addEventListener(
         "click",
-        openSkillManager
+        handleSkillButton
     );
 
 }
@@ -641,21 +658,15 @@ if (emptyAddSkillButton) {
 
     emptyAddSkillButton.addEventListener(
         "click",
-        openSkillManager
+        handleSkillButton
     );
 
 }
 
 
 /* =========================================================
-   15. PROFILE
+   PROFILE
    ========================================================= */
-
-const saveProfileButton =
-    document.getElementById(
-        "saveProfileButton"
-    );
-
 
 if (saveProfileButton) {
 
@@ -663,18 +674,8 @@ if (saveProfileButton) {
         "click",
         () => {
 
-            /*
-             * Firebase profile saving will be
-             * implemented later.
-             */
-
-            console.log(
-                "Profile saving will be connected to Firebase."
-            );
-
-
             alert(
-                "Profile saving will be available after Firebase is connected."
+                "Profile saving will be connected to Firestore in the next step."
             );
 
         }
@@ -684,10 +685,10 @@ if (saveProfileButton) {
 
 
 /* =========================================================
-   16. LOAD SECTION FROM URL
+   INITIAL SECTION
    ========================================================= */
 
-function loadInitialSection() {
+function initializeSection() {
 
     const hash =
         window.location.hash
@@ -700,49 +701,40 @@ function loadInitialSection() {
         sectionData[hash]
     ) {
 
-        showSection(
-            hash
-        );
-
-        return;
+        showSection(hash);
 
     }
 
+    else {
 
-    showSection(
-        "dashboard"
-    );
+        showSection("dashboard");
+
+    }
 
 }
 
 
 /* =========================================================
-   17. HANDLE BROWSER HISTORY
+   HASH CHANGE
    ========================================================= */
 
 window.addEventListener(
-    "popstate",
+    "hashchange",
     () => {
 
-        const hash =
+        const sectionName =
             window.location.hash
                 .replace("#", "")
                 .trim();
 
 
         if (
-            hash &&
-            sectionData[hash]
+            sectionName &&
+            sectionData[sectionName]
         ) {
 
             showSection(
-                hash
-            );
-
-        } else {
-
-            showSection(
-                "dashboard"
+                sectionName
             );
 
         }
@@ -752,38 +744,7 @@ window.addEventListener(
 
 
 /* =========================================================
-   18. RESPONSIVE SIDEBAR
+   INITIALIZATION
    ========================================================= */
 
-window.addEventListener(
-    "resize",
-    () => {
-
-        if (
-            window.innerWidth > 850
-        ) {
-
-            closeMobileSidebar();
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   19. INITIALIZE DASHBOARD
-   ========================================================= */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        loadInitialSection();
-
-        console.log(
-            "Ahmed Samir Portfolio Dashboard initialized."
-        );
-
-    }
-);
+initializeSection();
