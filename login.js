@@ -1,163 +1,149 @@
-"use strict";
-
 /* =========================================================
-   Ahmed Samir Portfolio
-   Admin Login
+   Ahmed Samir Portfolio - Admin Login
    ========================================================= */
 
-import { auth } from "./firebase.js";
+"use strict";
+
+
+import {
+    auth
+} from "./firebase.js";
+
 
 import {
     signInWithEmailAndPassword,
-    onAuthStateChanged,
-    signOut
+    onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 
 /* =========================================================
-   ADMIN UID
+   DOM ELEMENTS
    ========================================================= */
 
-const ADMIN_UID = "Sszp0JmpjcQhpsg78kqh5VS8row1";
+const loginForm =
+    document.getElementById("loginForm");
+
+const emailInput =
+    document.getElementById("email");
+
+const passwordInput =
+    document.getElementById("password");
+
+const togglePassword =
+    document.getElementById("togglePassword");
+
+const loginButton =
+    document.getElementById("loginButton");
+
+const loginButtonText =
+    document.getElementById("loginButtonText");
+
+const loginLoader =
+    document.getElementById("loginLoader");
+
+const loginMessage =
+    document.getElementById("loginMessage");
 
 
 /* =========================================================
-   DOM Elements
+   SHOW MESSAGE
    ========================================================= */
 
-const loginForm = document.getElementById("loginForm");
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-const loginButton = document.getElementById("loginButton");
-const loginMessage = document.getElementById("loginMessage");
-
-
-/* =========================================================
-   Message Helper
-   ========================================================= */
-
-function showMessage(message, type = "error") {
+function showMessage(
+    message,
+    type = "error"
+) {
 
     loginMessage.textContent = message;
 
-    loginMessage.className = "message " + type;
+    loginMessage.className =
+        `login-message ${type}`;
 
 }
 
 
 /* =========================================================
-   Check Existing Login
+   LOADING STATE
    ========================================================= */
 
-onAuthStateChanged(auth, async (user) => {
+function setLoading(isLoading) {
 
-    if (!user) {
-        return;
-    }
+    loginButton.disabled = isLoading;
 
-
-    /* -----------------------------------------------------
-       Check Admin UID
-       ----------------------------------------------------- */
-
-    if (user.uid === ADMIN_UID) {
-
-        showMessage(
-            "You are already logged in. Redirecting...",
-            "success"
-        );
-
-
-        setTimeout(() => {
-
-            window.location.href = "admin.html";
-
-        }, 700);
-
-
-        return;
-    }
-
-
-    /* -----------------------------------------------------
-       User is not the admin
-       ----------------------------------------------------- */
-
-    try {
-
-        await signOut(auth);
-
-    } catch (error) {
-
-        console.error(
-            "Sign out error:",
-            error
-        );
-
-    }
-
-
-    showMessage(
-        "This account is not authorized as an administrator.",
-        "error"
+    loginLoader.classList.toggle(
+        "hidden",
+        !isLoading
     );
 
-});
+    loginButtonText.textContent =
+        isLoading
+            ? "Signing In..."
+            : "Sign In";
+}
 
 
 /* =========================================================
-   Login Form
+   TOGGLE PASSWORD
    ========================================================= */
 
-loginForm.addEventListener("submit", async (event) => {
+togglePassword.addEventListener(
+    "click",
+    () => {
 
-    event.preventDefault();
-
-
-    /* -----------------------------------------------------
-       Get Values
-       ----------------------------------------------------- */
-
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
+        const isPassword =
+            passwordInput.type === "password";
 
 
-    /* -----------------------------------------------------
-       Basic Validation
-       ----------------------------------------------------- */
+        passwordInput.type =
+            isPassword
+                ? "text"
+                : "password";
 
-    if (!email || !password) {
 
-        showMessage(
-            "Please enter your email and password.",
-            "error"
-        );
+        togglePassword.textContent =
+            isPassword
+                ? "Hide"
+                : "Show";
 
-        return;
     }
+);
 
 
-    /* -----------------------------------------------------
-       Disable Button
-       ----------------------------------------------------- */
+/* =========================================================
+   LOGIN
+   ========================================================= */
 
-    loginButton.disabled = true;
+loginForm.addEventListener(
+    "submit",
+    async (event) => {
 
-    loginButton.textContent = "Signing in...";
-
-    showMessage(
-        "Checking your account...",
-        "success"
-    );
+        event.preventDefault();
 
 
-    try {
+        const email =
+            emailInput.value.trim();
 
-        /* -------------------------------------------------
-           Firebase Login
-           ------------------------------------------------- */
+        const password =
+            passwordInput.value;
 
-        const userCredential =
+
+        if (!email || !password) {
+
+            showMessage(
+                "Please enter your email and password."
+            );
+
+            return;
+        }
+
+
+        setLoading(true);
+
+        showMessage("");
+
+
+        try {
+
             await signInWithEmailAndPassword(
                 auth,
                 email,
@@ -165,135 +151,119 @@ loginForm.addEventListener("submit", async (event) => {
             );
 
 
-        const user =
-            userCredential.user;
-
-
-        /* -------------------------------------------------
-           Check Admin UID
-           ------------------------------------------------- */
-
-        if (user.uid !== ADMIN_UID) {
-
-            await signOut(auth);
-
-
             showMessage(
-                "Access denied. This account is not the portfolio administrator.",
-                "error"
+                "Login successful. Redirecting...",
+                "success"
             );
 
 
-            loginButton.disabled = false;
+            setTimeout(
+                () => {
 
-            loginButton.textContent = "Login";
+                    window.location.href =
+                        "dashboard.html";
 
-            return;
-        }
-
-
-        /* -------------------------------------------------
-           Successful Login
-           ------------------------------------------------- */
-
-        showMessage(
-            "Login successful. Opening admin dashboard...",
-            "success"
-        );
+                },
+                700
+            );
 
 
-        setTimeout(() => {
+        } catch (error) {
 
-            window.location.href = "admin.html";
-
-        }, 700);
-
-
-    } catch (error) {
-
-        console.error(
-            "Firebase Login Error:",
-            error
-        );
+            console.error(
+                "Login error:",
+                error
+            );
 
 
-        let message =
-            "Login failed. Please check your email and password.";
+            let message =
+                "Unable to sign in. Please check your details.";
 
 
-        /* -------------------------------------------------
-           Firebase Error Messages
-           ------------------------------------------------- */
-
-        switch (error.code) {
-
-            case "auth/invalid-credential":
+            if (
+                error.code ===
+                "auth/invalid-credential"
+            ) {
 
                 message =
-                    "Incorrect email or password.";
+                    "Email or password is incorrect.";
 
-                break;
+            }
 
 
-            case "auth/user-not-found":
+            else if (
+                error.code ===
+                "auth/user-not-found"
+            ) {
 
                 message =
                     "No account was found with this email.";
 
-                break;
+            }
 
 
-            case "auth/wrong-password":
+            else if (
+                error.code ===
+                "auth/wrong-password"
+            ) {
 
                 message =
-                    "Incorrect password.";
+                    "The password is incorrect.";
 
-                break;
+            }
 
 
-            case "auth/invalid-email":
+            else if (
+                error.code ===
+                "auth/invalid-email"
+            ) {
 
                 message =
                     "Please enter a valid email address.";
 
-                break;
+            }
 
 
-            case "auth/too-many-requests":
+            else if (
+                error.code ===
+                "auth/too-many-requests"
+            ) {
 
                 message =
                     "Too many attempts. Please try again later.";
 
-                break;
+            }
 
 
-            case "auth/network-request-failed":
+            showMessage(message);
 
-                message =
-                    "Network error. Check your internet connection.";
-
-                break;
-
-
-            default:
-
-                message =
-                    "Login failed. Please try again.";
-
-                break;
         }
 
 
-        showMessage(
-            message,
-            "error"
-        );
+        finally {
 
+            setLoading(false);
 
-        loginButton.disabled = false;
-
-        loginButton.textContent = "Login";
+        }
 
     }
+);
 
-});
+
+/* =========================================================
+   CHECK CURRENT LOGIN
+   ========================================================= */
+
+onAuthStateChanged(
+    auth,
+    (user) => {
+
+        if (user) {
+
+            window.location.href =
+                "dashboard.html";
+
+        }
+
+    }
+);
