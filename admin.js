@@ -1,25 +1,6 @@
 /* =========================================================
-   SAMIR PORTFOLIO - ADMIN DASHBOARD
-   FULL FIRESTORE CRUD VERSION
-   Projects + Certificates + Authentication
-
-   FULL STABLE VERSION
-   ---------------------------------------------------------
-   Projects:
-   - Add
-   - Edit
-   - Delete
-   - Read
-
-   Certificates:
-   - Add
-   - Edit
-   - Delete
-   - Read
-
-   IMPORTANT:
-   Dynamic forms are connected directly after creation.
-   Document-level delegation is also kept as a safety layer.
+   Ahmed Samir Portfolio
+   Admin Dashboard - Full Firestore CRUD
    ========================================================= */
 
 "use strict";
@@ -52,18 +33,15 @@ import {
    CONFIG
    ========================================================= */
 
-const ADMIN_UID =
-    "Sszp0JmpjcQhpsg78kqh5VS8row1";
+const ADMIN_UID = "Sszp0JmpjcQhpsg78kqh5VS8row1";
 
-const PROJECTS_COLLECTION =
-    "projects";
+const PROJECTS_COLLECTION = "projects";
 
-const CERTIFICATES_COLLECTION =
-    "certificates";
+const CERTIFICATES_COLLECTION = "certificates";
 
 
 /* =========================================================
-   DOM
+   DOM ELEMENTS
    ========================================================= */
 
 const sidebar =
@@ -75,35 +53,26 @@ const sidebarOverlay =
 const menuButton =
     document.getElementById("menuButton");
 
-const navItems =
-    document.querySelectorAll(".nav-item");
-
-const sections =
-    document.querySelectorAll(".content-section");
-
 const pageTitle =
     document.getElementById("pageTitle");
 
-const viewWebsiteButton =
-    document.getElementById("viewWebsiteButton");
+const modal =
+    document.getElementById("modal");
 
-const headerWebsiteButton =
-    document.getElementById("headerWebsiteButton");
+const modalBackdrop =
+    document.getElementById("modalBackdrop");
 
-const logoutButton =
-    document.getElementById("logoutButton");
+const modalClose =
+    document.getElementById("modalClose");
 
-const addProjectButton =
-    document.getElementById("addProjectButton");
+const modalTitle =
+    document.getElementById("modalTitle");
 
-const addCertificateButton =
-    document.getElementById("addCertificateButton");
+const modalKicker =
+    document.getElementById("modalKicker");
 
-const addCourseButton =
-    document.getElementById("addCourseButton");
-
-const addSkillButton =
-    document.getElementById("addSkillButton");
+const modalBody =
+    document.getElementById("modalBody");
 
 const projectsContainer =
     document.getElementById("projectsContainer");
@@ -129,23 +98,29 @@ const coursesCount =
 const skillsCount =
     document.getElementById("skillsCount");
 
+const addProjectButton =
+    document.getElementById("addProjectButton");
+
+const addCertificateButton =
+    document.getElementById("addCertificateButton");
+
+const addCourseButton =
+    document.getElementById("addCourseButton");
+
+const addSkillButton =
+    document.getElementById("addSkillButton");
+
+const viewWebsiteButton =
+    document.getElementById("viewWebsiteButton");
+
+const headerWebsiteButton =
+    document.getElementById("headerWebsiteButton");
+
+const logoutButton =
+    document.getElementById("logoutButton");
+
 const currentYear =
     document.getElementById("currentYear");
-
-const modal =
-    document.getElementById("modal");
-
-const modalBackdrop =
-    document.getElementById("modalBackdrop");
-
-const modalClose =
-    document.getElementById("modalClose");
-
-const modalTitle =
-    document.getElementById("modalTitle");
-
-const modalBody =
-    document.getElementById("modalBody");
 
 
 /* =========================================================
@@ -184,19 +159,7 @@ const SECTION_TITLES = {
 
 
 /* =========================================================
-   YEAR
-   ========================================================= */
-
-if (currentYear) {
-
-    currentYear.textContent =
-        new Date().getFullYear();
-
-}
-
-
-/* =========================================================
-   HTML ESCAPE
+   UTILITY
    ========================================================= */
 
 function escapeHTML(value) {
@@ -205,39 +168,15 @@ function escapeHTML(value) {
         value === null ||
         value === undefined
     ) {
-
         return "";
-
     }
 
-
     return String(value)
-
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-
-        .replace(
-            /</g,
-            "&lt;"
-        )
-
-        .replace(
-            />/g,
-            "&gt;"
-        )
-
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
@@ -248,127 +187,50 @@ function escapeHTML(value) {
 function getFirebaseErrorMessage(error) {
 
     if (!error) {
-
-        return "خطأ غير معروف.";
-
+        return "حدث خطأ غير معروف.";
     }
 
+    console.error(
+        "Firebase Error:",
+        error
+    );
 
     const code =
         error.code || "";
 
-    const message =
-        error.message || "";
+    switch (code) {
 
+        case "permission-denied":
 
-    console.error(
-        "Firebase Error Code:",
-        code
-    );
+            return "ليس لديك صلاحية لتنفيذ هذه العملية على Firestore.";
 
-    console.error(
-        "Firebase Error Message:",
-        message
-    );
+        case "unauthenticated":
 
+            return "يجب تسجيل الدخول أولًا.";
 
-    if (
-        code ===
-        "permission-denied"
-    ) {
+        case "failed-precondition":
 
-        return (
-            "Firebase رفض العملية بسبب الصلاحيات.\n\n" +
+            return "Firebase يحتاج إلى إعداد إضافي قبل تنفيذ العملية.";
 
-            "Admin UID المطلوب:\n" +
+        case "unavailable":
 
-            ADMIN_UID +
+            return "Firebase غير متاح حاليًا. تحقق من الإنترنت وحاول مرة أخرى.";
 
-            "\n\n" +
+        case "not-found":
 
-            "تأكد أن Firestore Rules منشورة Publish وأن UID الخاص بالحساب مطابق."
-        );
+            return "البيانات المطلوبة غير موجودة.";
 
+        case "already-exists":
+
+            return "البيانات موجودة بالفعل.";
+
+        default:
+
+            return (
+                error.message ||
+                "حدث خطأ أثناء الاتصال بـ Firebase."
+            );
     }
-
-
-    if (
-        code ===
-        "unauthenticated"
-    ) {
-
-        return (
-            "المستخدم غير مسجل الدخول في Firebase."
-        );
-
-    }
-
-
-    if (
-        code ===
-        "not-found"
-    ) {
-
-        return (
-            "المستند المطلوب غير موجود."
-        );
-
-    }
-
-
-    if (
-        code ===
-        "invalid-argument"
-    ) {
-
-        return (
-            "هناك بيانات غير صحيحة تم إرسالها إلى Firebase."
-        );
-
-    }
-
-
-    if (
-        code ===
-        "failed-precondition"
-    ) {
-
-        return (
-            "Firebase يحتاج إلى إعداد إضافي قبل تنفيذ العملية."
-        );
-
-    }
-
-
-    if (
-        code ===
-        "unavailable"
-    ) {
-
-        return (
-            "Firebase غير متاح حاليًا. تحقق من الإنترنت وحاول مرة أخرى."
-        );
-
-    }
-
-
-    if (
-        code ===
-        "network-request-failed"
-    ) {
-
-        return (
-            "حدثت مشكلة في الاتصال بالإنترنت أو Firebase."
-        );
-
-    }
-
-
-    return (
-        message ||
-        "حدث خطأ غير معروف في Firebase."
-    );
-
 }
 
 
@@ -381,259 +243,55 @@ function checkAdmin() {
     const user =
         auth.currentUser;
 
-
-    console.log(
-        "========================================"
-    );
-
-    console.log(
-        "ADMIN CHECK"
-    );
-
-    console.log(
-        "Current user:",
-        user
-    );
-
-
     if (!user) {
 
-        console.error(
-            "NO FIREBASE USER"
-        );
-
-
         alert(
-            "أنت غير مسجل الدخول في Firebase.\n\nسيتم إعادتك لصفحة تسجيل الدخول."
+            "يجب تسجيل الدخول كمسؤول أولًا."
         );
-
-
-        window.location.href =
-            "login.html";
-
 
         return false;
-
     }
 
-
-    console.log(
-        "Current UID:",
-        user.uid
-    );
-
-    console.log(
-        "Required UID:",
-        ADMIN_UID
-    );
-
-
-    if (
-        user.uid !==
-        ADMIN_UID
-    ) {
-
-        console.error(
-            "UID DOES NOT MATCH"
-        );
-
+    if (user.uid !== ADMIN_UID) {
 
         alert(
-            "هذا الحساب ليس حساب الأدمن.\n\nUID الحالي:\n" +
-            user.uid
+            "هذا الحساب غير مصرح له باستخدام لوحة الإدارة."
         );
 
-
         return false;
-
     }
 
-
-    currentAdminUser =
-        user;
-
-
-    console.log(
-        "ADMIN CHECK PASSED"
-    );
-
-    console.log(
-        "========================================"
-    );
-
+    currentAdminUser = user;
 
     return true;
-
 }
 
 
 /* =========================================================
-   FIREBASE CONNECTION TEST
-   ========================================================= */
-
-async function testFirebaseConnection() {
-
-    console.log(
-        "========================================"
-    );
-
-    console.log(
-        "FIREBASE CONNECTION TEST"
-    );
-
-
-    try {
-
-        const user =
-            auth.currentUser;
-
-
-        if (!user) {
-
-            console.error(
-                "Firebase Auth: NO USER"
-            );
-
-            return false;
-
-        }
-
-
-        console.log(
-            "Firebase Auth: OK"
-        );
-
-
-        console.log(
-            "UID:",
-            user.uid
-        );
-
-
-        console.log(
-            "Testing Firestore read..."
-        );
-
-
-        const projectsSnapshot =
-            await getDocs(
-                collection(
-                    db,
-                    PROJECTS_COLLECTION
-                )
-            );
-
-
-        console.log(
-            "Firestore read: OK"
-        );
-
-
-        console.log(
-            "Projects documents:",
-            projectsSnapshot.size
-        );
-
-
-        const certificatesSnapshot =
-            await getDocs(
-                collection(
-                    db,
-                    CERTIFICATES_COLLECTION
-                )
-            );
-
-
-        console.log(
-            "Certificates read: OK"
-        );
-
-
-        console.log(
-            "Certificates documents:",
-            certificatesSnapshot.size
-        );
-
-
-        console.log(
-            "FIREBASE CONNECTION TEST PASSED"
-        );
-
-
-        console.log(
-            "========================================"
-        );
-
-
-        return true;
-
-    } catch (error) {
-
-        console.error(
-            "FIREBASE CONNECTION TEST FAILED",
-            error
-        );
-
-
-        console.error(
-            getFirebaseErrorMessage(
-                error
-            )
-        );
-
-
-        return false;
-
-    }
-
-}
-
-
-/* =========================================================
-   MOBILE SIDEBAR
+   SIDEBAR
    ========================================================= */
 
 function openSidebar() {
 
     if (sidebar) {
-
-        sidebar.classList.add(
-            "active"
-        );
-
+        sidebar.classList.add("open");
     }
-
 
     if (sidebarOverlay) {
-
-        sidebarOverlay.classList.add(
-            "active"
-        );
-
+        sidebarOverlay.classList.add("open");
     }
-
 }
 
 
 function closeSidebar() {
 
     if (sidebar) {
-
-        sidebar.classList.remove(
-            "active"
-        );
-
+        sidebar.classList.remove("open");
     }
-
 
     if (sidebarOverlay) {
-
-        sidebarOverlay.classList.remove(
-            "active"
-        );
-
+        sidebarOverlay.classList.remove("open");
     }
-
 }
 
 
@@ -641,9 +299,23 @@ if (menuButton) {
 
     menuButton.addEventListener(
         "click",
-        openSidebar
-    );
+        () => {
 
+            if (
+                sidebar &&
+                sidebar.classList.contains("open")
+            ) {
+
+                closeSidebar();
+
+            } else {
+
+                openSidebar();
+
+            }
+
+        }
+    );
 }
 
 
@@ -653,25 +325,27 @@ if (sidebarOverlay) {
         "click",
         closeSidebar
     );
-
 }
 
 
 /* =========================================================
-   SECTION NAVIGATION
+   SHOW SECTION
    ========================================================= */
 
-function showSection(sectionName) {
+async function showSection(sectionName) {
 
-    if (!sectionName) {
+    const sections =
+        document.querySelectorAll(
+            ".content-section"
+        );
 
-        return;
-
-    }
-
+    const navItems =
+        document.querySelectorAll(
+            ".nav-item[data-section]"
+        );
 
     sections.forEach(
-        (section) => {
+        section => {
 
             section.classList.remove(
                 "active"
@@ -680,9 +354,8 @@ function showSection(sectionName) {
         }
     );
 
-
     navItems.forEach(
-        (item) => {
+        item => {
 
             item.classList.remove(
                 "active"
@@ -691,12 +364,10 @@ function showSection(sectionName) {
         }
     );
 
-
     const targetSection =
         document.getElementById(
             `${sectionName}Section`
         );
-
 
     if (targetSection) {
 
@@ -706,12 +377,10 @@ function showSection(sectionName) {
 
     }
 
-
     const activeNav =
         document.querySelector(
             `.nav-item[data-section="${sectionName}"]`
         );
-
 
     if (activeNav) {
 
@@ -721,89 +390,69 @@ function showSection(sectionName) {
 
     }
 
-
     if (pageTitle) {
 
         pageTitle.textContent =
-            SECTION_TITLES[
-                sectionName
-            ] ||
-            "Dashboard";
+            SECTION_TITLES[sectionName] ||
+            sectionName;
 
     }
-
 
     closeSidebar();
 
-
     if (
-        sectionName ===
-        "projects"
+        sectionName === "projects"
     ) {
 
-        loadProjects();
+        await loadProjects();
 
     }
 
-
     if (
-        sectionName ===
-        "certificates"
+        sectionName === "certificates"
     ) {
 
-        loadCertificates();
+        await loadCertificates();
 
     }
 
-
     if (
-        sectionName ===
-        "courses"
+        sectionName === "dashboard"
     ) {
 
-        showCoursesPlaceholder();
+        await updateDashboardStats();
 
     }
-
-
-    if (
-        sectionName ===
-        "skills"
-    ) {
-
-        showSkillsPlaceholder();
-
-    }
-
 }
 
 
 /* =========================================================
-   NAVIGATION EVENTS
+   SIDEBAR NAVIGATION
    ========================================================= */
 
-navItems.forEach(
-    (item) => {
+document.addEventListener(
+    "click",
+    async event => {
 
-        item.addEventListener(
-            "click",
-            () => {
+        const navItem =
+            event.target.closest(
+                ".nav-item[data-section]"
+            );
 
-                const sectionName =
-                    item.dataset.section;
+        if (!navItem) {
+            return;
+        }
 
+        const section =
+            navItem.dataset.section;
 
-                if (sectionName) {
+        if (!section) {
+            return;
+        }
 
-                    showSection(
-                        sectionName
-                    );
-
-                }
-
-            }
+        await showSection(
+            section
         );
-
     }
 );
 
@@ -812,890 +461,176 @@ navItems.forEach(
    QUICK ACTIONS
    ========================================================= */
 
-document
-    .querySelectorAll(
-        ".quick-action"
-    )
-    .forEach(
-        (button) => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    const sectionName =
-                        button.dataset.section;
-
-
-                    if (!sectionName) {
-
-                        return;
-
-                    }
-
-
-                    showSection(
-                        sectionName
-                    );
-
-
-                    if (
-                        sectionName ===
-                        "projects"
-                    ) {
-
-                        setTimeout(
-                            () => {
-
-                                openAddProjectModal();
-
-                            },
-                            100
-                        );
-
-                    }
-
-
-                    if (
-                        sectionName ===
-                        "certificates"
-                    ) {
-
-                        setTimeout(
-                            () => {
-
-                                openAddCertificateModal();
-
-                            },
-                            100
-                        );
-
-                    }
-
-
-                    if (
-                        sectionName ===
-                        "courses"
-                    ) {
-
-                        setTimeout(
-                            () => {
-
-                                openCourseComingSoon();
-
-                            },
-                            100
-                        );
-
-                    }
-
-                }
-            );
-
-        }
-    );
-
-
-/* =========================================================
-   DATA ACTION EVENTS
-   ========================================================= */
-
 document.addEventListener(
     "click",
-    (event) => {
+    async event => {
 
-        const target =
-            event.target instanceof Element
-                ? event.target
-                : null;
-
-
-        if (!target) {
-
-            return;
-
-        }
-
-
-        const button =
-            target.closest(
+        const actionButton =
+            event.target.closest(
                 "[data-action]"
             );
 
-
-        if (!button) {
-
+        if (!actionButton) {
             return;
-
         }
-
 
         const action =
-            button.dataset.action;
-
-
-        if (
-            action ===
-            "add-project"
-        ) {
-
-            event.preventDefault();
-
-            openAddProjectModal();
-
-            return;
-
-        }
-
+            actionButton.dataset.action;
 
         if (
-            action ===
-            "add-certificate"
+            action === "add-project"
         ) {
 
-            event.preventDefault();
-
-            openAddCertificateModal();
+            await openAddProjectModal();
 
             return;
-
         }
-
 
         if (
-            action ===
-            "add-course"
+            action === "add-certificate"
         ) {
 
-            event.preventDefault();
-
-            openCourseComingSoon();
+            await openAddCertificateModal();
 
             return;
-
         }
-
 
         if (
-            action ===
-            "add-skill"
+            action === "add-course"
         ) {
 
-            event.preventDefault();
-
-            openSkillComingSoon();
+            await openAddCourseModal();
 
             return;
-
         }
 
+        if (
+            action === "add-skill"
+        ) {
+
+            await openAddSkillModal();
+
+            return;
+        }
     }
 );
 
 
 /* =========================================================
-   IMPORTANT:
-   DYNAMIC SAVE BUTTONS
-   SAFETY EVENT DELEGATION
+   QUICK ACTION SECTION BUTTONS
    ========================================================= */
 
 document.addEventListener(
     "click",
-    async (event) => {
+    async event => {
 
-        const target =
-            event.target instanceof Element
-                ? event.target
-                : null;
+        const button =
+            event.target.closest(
+                ".quick-action"
+            );
 
-
-        if (!target) {
-
+        if (!button) {
             return;
-
         }
 
-
-        const projectSaveButton =
-            target.closest(
-                "#saveProjectBtn"
-            );
-
-
-        if (projectSaveButton) {
-
-            event.preventDefault();
-
-            event.stopPropagation();
-
-
-            console.log(
-                "========================================"
-            );
-
-            console.log(
-                "PROJECT SAVE BUTTON CLICK DETECTED"
-            );
-
-            console.log(
-                "========================================"
-            );
-
-
-            if (
-                isSavingProject
-            ) {
-
-                console.warn(
-                    "Project save already running."
-                );
-
-                return;
-
-            }
-
-
-            await handleProjectSaveButton(
-                projectSaveButton
-            );
-
-
-            return;
-
-        }
-
-
-        const certificateSaveButton =
-            target.closest(
-                "#saveCertificateBtn"
-            );
-
-
-        if (certificateSaveButton) {
-
-            event.preventDefault();
-
-            event.stopPropagation();
-
-
-            console.log(
-                "========================================"
-            );
-
-            console.log(
-                "CERTIFICATE SAVE BUTTON CLICK DETECTED"
-            );
-
-            console.log(
-                "========================================"
-            );
-
-
-            if (
-                isSavingCertificate
-            ) {
-
-                console.warn(
-                    "Certificate save already running."
-                );
-
-                return;
-
-            }
-
-
-            await handleCertificateSaveButton(
-                certificateSaveButton
-            );
-
-
-            return;
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   PROJECT SAVE BUTTON HANDLER
-   ========================================================= */
-
-async function handleProjectSaveButton(
-    button
-) {
-
-    if (!button) {
-
-        return;
-
-    }
-
-
-    if (
-        isSavingProject
-    ) {
-
-        return;
-
-    }
-
-
-    isSavingProject =
-        true;
-
-
-    const originalText =
-        button.textContent;
-
-
-    button.disabled =
-        true;
-
-
-    button.setAttribute(
-        "aria-disabled",
-        "true"
-    );
-
-
-    button.classList.add(
-        "is-loading"
-    );
-
-
-    button.textContent =
-        "جاري الحفظ...";
-
-
-    try {
-
-        await saveProject();
-
-    } catch (error) {
-
-        console.error(
-            "PROJECT SAVE HANDLER ERROR:",
-            error
-        );
-
-
-        alert(
-            "حدث خطأ أثناء حفظ المشروع:\n\n" +
-            getFirebaseErrorMessage(
-                error
-            )
-        );
-
-    } finally {
-
-        isSavingProject =
-            false;
-
-
-        const currentButton =
-            document.getElementById(
-                "saveProjectBtn"
-            );
-
-
-        if (currentButton) {
-
-            currentButton.disabled =
-                false;
-
-
-            currentButton.removeAttribute(
-                "aria-disabled"
-            );
-
-
-            currentButton.classList.remove(
-                "is-loading"
-            );
-
-
-            const projectId =
-                document.getElementById(
-                    "projectId"
-                )?.value.trim() || "";
-
-
-            currentButton.textContent =
-                projectId
-                    ? "حفظ التعديلات"
-                    : "إضافة المشروع";
-
-        }
-
-    }
-
-}
-
-
-/* =========================================================
-   CERTIFICATE SAVE BUTTON HANDLER
-   ========================================================= */
-
-async function handleCertificateSaveButton(
-    button
-) {
-
-    if (!button) {
-
-        return;
-
-    }
-
-
-    if (
-        isSavingCertificate
-    ) {
-
-        return;
-
-    }
-
-
-    isSavingCertificate =
-        true;
-
-
-    button.disabled =
-        true;
-
-
-    button.setAttribute(
-        "aria-disabled",
-        "true"
-    );
-
-
-    button.classList.add(
-        "is-loading"
-    );
-
-
-    button.textContent =
-        "جاري الحفظ...";
-
-
-    try {
-
-        await saveCertificate();
-
-    } catch (error) {
-
-        console.error(
-            "CERTIFICATE SAVE HANDLER ERROR:",
-            error
-        );
-
-
-        alert(
-            "حدث خطأ أثناء حفظ الشهادة:\n\n" +
-            getFirebaseErrorMessage(
-                error
-            )
-        );
-
-    } finally {
-
-        isSavingCertificate =
-            false;
-
-
-        const currentButton =
-            document.getElementById(
-                "saveCertificateBtn"
-            );
-
-
-        if (currentButton) {
-
-            currentButton.disabled =
-                false;
-
-
-            currentButton.removeAttribute(
-                "aria-disabled"
-            );
-
-
-            currentButton.classList.remove(
-                "is-loading"
-            );
-
-
-            const certificateId =
-                document.getElementById(
-                    "certificateId"
-                )?.value.trim() || "";
-
-
-            currentButton.textContent =
-                certificateId
-                    ? "حفظ التعديلات"
-                    : "إضافة الشهادة";
-
-        }
-
-    }
-
-}
-
-
-/* =========================================================
-   FORM SUBMIT SAFETY
-   ========================================================= */
-
-document.addEventListener(
-    "submit",
-    async (event) => {
-
-        const form =
-            event.target;
-
+        const section =
+            button.dataset.section;
 
         if (
-            form?.id ===
-            "projectForm"
+            section === "projects"
         ) {
 
-            event.preventDefault();
+            await showSection(
+                "projects"
+            );
 
-            event.stopPropagation();
-
-
-            const button =
-                document.getElementById(
-                    "saveProjectBtn"
-                );
-
-
-            if (
-                button &&
-                !isSavingProject
-            ) {
-
-                await handleProjectSaveButton(
-                    button
-                );
-
-            }
-
+            await openAddProjectModal();
 
             return;
-
         }
-
 
         if (
-            form?.id ===
-            "certificateForm"
+            section === "certificates"
         ) {
 
-            event.preventDefault();
+            await showSection(
+                "certificates"
+            );
 
-            event.stopPropagation();
-
-
-            const button =
-                document.getElementById(
-                    "saveCertificateBtn"
-                );
-
-
-            if (
-                button &&
-                !isSavingCertificate
-            ) {
-
-                await handleCertificateSaveButton(
-                    button
-                );
-
-            }
-
+            await openAddCertificateModal();
 
             return;
-
         }
 
+        if (
+            section === "courses"
+        ) {
+
+            await showSection(
+                "courses"
+            );
+
+            await openAddCourseModal();
+
+            return;
+        }
     }
 );
 
 
 /* =========================================================
-   DYNAMIC CANCEL BUTTONS
+   ADD BUTTONS
    ========================================================= */
 
-document.addEventListener(
-    "click",
-    (event) => {
+if (addProjectButton) {
 
-        const target =
-            event.target instanceof Element
-                ? event.target
-                : null;
-
-
-        if (!target) {
-
-            return;
-
-        }
-
-
-        const projectCancelButton =
-            target.closest(
-                "#cancelProjectBtn"
-            );
-
-
-        if (projectCancelButton) {
-
-            event.preventDefault();
-
-            event.stopPropagation();
-
-            closeModal();
-
-            return;
-
-        }
-
-
-        const certificateCancelButton =
-            target.closest(
-                "#cancelCertificateBtn"
-            );
-
-
-        if (certificateCancelButton) {
-
-            event.preventDefault();
-
-            event.stopPropagation();
-
-            closeModal();
-
-            return;
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   PROJECT EDIT / DELETE DELEGATION
-   ========================================================= */
-
-document.addEventListener(
-    "click",
-    (event) => {
-
-        const target =
-            event.target instanceof Element
-                ? event.target
-                : null;
-
-
-        if (!target) {
-
-            return;
-
-        }
-
-
-        const editButton =
-            target.closest(
-                ".edit-project-btn"
-            );
-
-
-        if (editButton) {
-
-            event.preventDefault();
-
-            editProject(
-                editButton.dataset.id
-            );
-
-            return;
-
-        }
-
-
-        const deleteButton =
-            target.closest(
-                ".delete-project-btn"
-            );
-
-
-        if (deleteButton) {
-
-            event.preventDefault();
-
-            deleteProject(
-                deleteButton.dataset.id
-            );
-
-            return;
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   CERTIFICATE EDIT / DELETE DELEGATION
-   ========================================================= */
-
-document.addEventListener(
-    "click",
-    (event) => {
-
-        const target =
-            event.target instanceof Element
-                ? event.target
-                : null;
-
-
-        if (!target) {
-
-            return;
-
-        }
-
-
-        const editButton =
-            target.closest(
-                ".edit-certificate-btn"
-            );
-
-
-        if (editButton) {
-
-            event.preventDefault();
-
-            editCertificate(
-                editButton.dataset.id
-            );
-
-            return;
-
-        }
-
-
-        const deleteButton =
-            target.closest(
-                ".delete-certificate-btn"
-            );
-
-
-        if (deleteButton) {
-
-            event.preventDefault();
-
-            deleteCertificate(
-                deleteButton.dataset.id
-            );
-
-            return;
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   WEBSITE
-   ========================================================= */
-
-function openWebsite() {
-
-    window.location.href =
-        "index.html";
-
-}
-
-
-if (viewWebsiteButton) {
-
-    viewWebsiteButton.addEventListener(
-        "click",
-        openWebsite
-    );
-
-}
-
-
-if (headerWebsiteButton) {
-
-    headerWebsiteButton.addEventListener(
-        "click",
-        openWebsite
-    );
-
-}
-
-
-/* =========================================================
-   LOGOUT
-   ========================================================= */
-
-if (logoutButton) {
-
-    logoutButton.addEventListener(
+    addProjectButton.addEventListener(
         "click",
         async () => {
 
-            const confirmed =
-                confirm(
-                    "هل تريد تسجيل الخروج؟"
-                );
-
-
-            if (!confirmed) {
-
-                return;
-
-            }
-
-
-            try {
-
-                await signOut(
-                    auth
-                );
-
-
-                window.location.href =
-                    "login.html";
-
-            } catch (error) {
-
-                console.error(
-                    "Logout error:",
-                    error
-                );
-
-
-                alert(
-                    getFirebaseErrorMessage(
-                        error
-                    )
-                );
-
-            }
+            await openAddProjectModal();
 
         }
     );
+}
 
+
+if (addCertificateButton) {
+
+    addCertificateButton.addEventListener(
+        "click",
+        async () => {
+
+            await openAddCertificateModal();
+
+        }
+    );
+}
+
+
+if (addCourseButton) {
+
+    addCourseButton.addEventListener(
+        "click",
+        async () => {
+
+            await openAddCourseModal();
+
+        }
+    );
+}
+
+
+if (addSkillButton) {
+
+    addSkillButton.addEventListener(
+        "click",
+        async () => {
+
+            await openAddSkillModal();
+
+        }
+    );
 }
 
 
@@ -1705,25 +640,18 @@ if (logoutButton) {
 
 function openModal(
     title,
-    content
+    content,
+    kicker = "CONTENT"
 ) {
 
     if (!modal) {
 
-        console.error(
-            "MODAL ELEMENT NOT FOUND"
-        );
-
-
         alert(
-            "خطأ: نافذة الإضافة غير موجودة في admin.html."
+            "عنصر الـ Modal غير موجود في admin.html."
         );
-
 
         return;
-
     }
-
 
     if (modalTitle) {
 
@@ -1732,6 +660,12 @@ function openModal(
 
     }
 
+    if (modalKicker) {
+
+        modalKicker.textContent =
+            kicker;
+
+    }
 
     if (modalBody) {
 
@@ -1740,67 +674,43 @@ function openModal(
 
     }
 
-
     modal.classList.add(
-        "active"
+        "open"
     );
-
 
     modal.setAttribute(
         "aria-hidden",
         "false"
     );
 
-
-    document.body.classList.add(
-        "modal-open"
-    );
-
-
-    console.log(
-        "MODAL OPENED:",
-        title
-    );
-
+    document.body.style.overflow =
+        "hidden";
 }
 
-
-/* =========================================================
-   CLOSE MODAL
-   ========================================================= */
 
 function closeModal() {
 
     if (!modal) {
-
         return;
-
     }
 
-
     modal.classList.remove(
-        "active"
+        "open"
     );
-
 
     modal.setAttribute(
         "aria-hidden",
         "true"
     );
 
-
-    document.body.classList.remove(
-        "modal-open"
-    );
-
+    document.body.style.overflow =
+        "";
 
     isSavingProject =
         false;
 
-
     isSavingCertificate =
         false;
-
 }
 
 
@@ -1810,7 +720,6 @@ if (modalClose) {
         "click",
         closeModal
     );
-
 }
 
 
@@ -1820,23 +729,24 @@ if (modalBackdrop) {
         "click",
         closeModal
     );
-
 }
 
 
 document.addEventListener(
     "keydown",
-    (event) => {
+    event => {
 
         if (
-            event.key ===
-            "Escape"
+            event.key === "Escape" &&
+            modal &&
+            modal.classList.contains(
+                "open"
+            )
         ) {
 
             closeModal();
 
         }
-
     }
 );
 
@@ -1850,36 +760,31 @@ function getProjectFormHTML(
 ) {
 
     const isEdit =
-        project !== null;
+        Boolean(project);
 
+    const projectId =
+        project?.id || "";
 
     const title =
         project?.title || "";
 
-
     const category =
         project?.category || "gis";
 
+    const status =
+        project?.status || "Completed";
 
     const description =
         project?.description || "";
 
-
     const tools =
         project?.tools || "";
-
-
-    const status =
-        project?.status || "Planned";
-
-
-    const projectLink =
-        project?.projectLink || "";
-
 
     const imageUrl =
         project?.imageUrl || "";
 
+    const projectLink =
+        project?.projectLink || "";
 
     return `
 
@@ -1892,183 +797,142 @@ function getProjectFormHTML(
             <input
                 type="hidden"
                 id="projectId"
-                value="${escapeHTML(
-                    project?.id || ""
-                )}"
+                value="${escapeHTML(projectId)}"
             >
 
 
             <div class="form-group">
 
-                <label>
+                <label for="projectTitle">
                     Project Title
                 </label>
 
                 <input
                     type="text"
                     id="projectTitle"
-                    placeholder="GIS Mapping Project"
-                    value="${escapeHTML(
-                        title
-                    )}"
-                    required
+                    placeholder="مثال: GIS Urban Analysis"
+                    value="${escapeHTML(title)}"
+                    autocomplete="off"
                 >
-
-            </div>
-
-
-            <div class="form-row">
-
-                <div class="form-group">
-
-                    <label>
-                        Category
-                    </label>
-
-                    <select
-                        id="projectCategory"
-                    >
-
-                        <option
-                            value="gis"
-                            ${
-                                category === "gis"
-                                    ? "selected"
-                                    : ""
-                            }
-                        >
-                            GIS
-                        </option>
-
-                        <option
-                            value="surveying"
-                            ${
-                                category === "surveying"
-                                    ? "selected"
-                                    : ""
-                            }
-                        >
-                            Surveying
-                        </option>
-
-                        <option
-                            value="remote-sensing"
-                            ${
-                                category === "remote-sensing"
-                                    ? "selected"
-                                    : ""
-                            }
-                        >
-                            Remote Sensing
-                        </option>
-
-                        <option
-                            value="programming"
-                            ${
-                                category === "programming"
-                                    ? "selected"
-                                    : ""
-                            }
-                        >
-                            Programming
-                        </option>
-
-                        <option
-                            value="civil3d"
-                            ${
-                                category === "civil3d"
-                                    ? "selected"
-                                    : ""
-                            }
-                        >
-                            Civil 3D
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div class="form-group">
-
-                    <label>
-                        Status
-                    </label>
-
-                    <select
-                        id="projectStatus"
-                    >
-
-                        <option
-                            value="Planned"
-                            ${
-                                status === "Planned"
-                                    ? "selected"
-                                    : ""
-                            }
-                        >
-                            Planned
-                        </option>
-
-                        <option
-                            value="In Progress"
-                            ${
-                                status === "In Progress"
-                                    ? "selected"
-                                    : ""
-                            }
-                        >
-                            In Progress
-                        </option>
-
-                        <option
-                            value="Completed"
-                            ${
-                                status === "Completed"
-                                    ? "selected"
-                                    : ""
-                            }
-                        >
-                            Completed
-                        </option>
-
-                    </select>
-
-                </div>
 
             </div>
 
 
             <div class="form-group">
 
-                <label>
+                <label for="projectCategory">
+                    Category
+                </label>
+
+                <select id="projectCategory">
+
+                    <option
+                        value="gis"
+                        ${category === "gis" ? "selected" : ""}
+                    >
+                        GIS
+                    </option>
+
+                    <option
+                        value="surveying"
+                        ${category === "surveying" ? "selected" : ""}
+                    >
+                        Surveying
+                    </option>
+
+                    <option
+                        value="remote-sensing"
+                        ${category === "remote-sensing" ? "selected" : ""}
+                    >
+                        Remote Sensing
+                    </option>
+
+                    <option
+                        value="civil3d"
+                        ${category === "civil3d" ? "selected" : ""}
+                    >
+                        Civil 3D
+                    </option>
+
+                    <option
+                        value="programming"
+                        ${category === "programming" ? "selected" : ""}
+                    >
+                        Programming
+                    </option>
+
+                    <option
+                        value="other"
+                        ${category === "other" ? "selected" : ""}
+                    >
+                        Other
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="projectStatus">
+                    Status
+                </label>
+
+                <select id="projectStatus">
+
+                    <option
+                        value="Completed"
+                        ${status === "Completed" ? "selected" : ""}
+                    >
+                        Completed
+                    </option>
+
+                    <option
+                        value="In Progress"
+                        ${status === "In Progress" ? "selected" : ""}
+                    >
+                        In Progress
+                    </option>
+
+                    <option
+                        value="Planned"
+                        ${status === "Planned" ? "selected" : ""}
+                    >
+                        Planned
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="projectDescription">
                     Description
                 </label>
 
                 <textarea
                     id="projectDescription"
-                    rows="5"
-                    required
-                >${escapeHTML(
-                    description
-                )}</textarea>
+                    placeholder="اكتب وصف المشروع..."
+                >${escapeHTML(description)}</textarea>
 
             </div>
 
 
             <div class="form-group">
 
-                <label>
-                    Tools / Technologies
+                <label for="projectTools">
+                    Tools
                 </label>
 
                 <input
                     type="text"
                     id="projectTools"
-                    placeholder="ArcGIS Pro, AutoCAD, Python"
-                    value="${escapeHTML(
-                        tools
-                    )}"
+                    placeholder="ArcGIS Pro, AutoCAD, Python..."
+                    value="${escapeHTML(tools)}"
+                    autocomplete="off"
                 >
 
             </div>
@@ -2076,7 +940,7 @@ function getProjectFormHTML(
 
             <div class="form-group">
 
-                <label>
+                <label for="projectImageUrl">
                     Image URL
                 </label>
 
@@ -2084,31 +948,25 @@ function getProjectFormHTML(
                     type="text"
                     id="projectImageUrl"
                     placeholder="https://..."
-                    value="${escapeHTML(
-                        imageUrl
-                    )}"
+                    value="${escapeHTML(imageUrl)}"
+                    autocomplete="off"
                 >
-
-                <small>
-                    استخدم رابط صورة من GitHub أو استضافة مجانية.
-                </small>
 
             </div>
 
 
             <div class="form-group">
 
-                <label>
+                <label for="projectLink">
                     Project Link
                 </label>
 
                 <input
                     type="text"
                     id="projectLink"
-                    placeholder="https://github.com/..."
-                    value="${escapeHTML(
-                        projectLink
-                    )}"
+                    placeholder="https://..."
+                    value="${escapeHTML(projectLink)}"
+                    autocomplete="off"
                 >
 
             </div>
@@ -2142,155 +1000,6 @@ function getProjectFormHTML(
         </form>
 
     `;
-
-}
-
-
-/* =========================================================
-   CONNECT PROJECT FORM DIRECTLY
-   ========================================================= */
-
-function attachProjectFormEvents() {
-
-    const form =
-        document.getElementById(
-            "projectForm"
-        );
-
-
-    const saveButton =
-        document.getElementById(
-            "saveProjectBtn"
-        );
-
-
-    const cancelButton =
-        document.getElementById(
-            "cancelProjectBtn"
-        );
-
-
-    console.log(
-        "========================================"
-    );
-
-    console.log(
-        "ATTACH PROJECT FORM EVENTS"
-    );
-
-    console.log(
-        "Project form:",
-        !!form
-    );
-
-    console.log(
-        "Project save button:",
-        !!saveButton
-    );
-
-    console.log(
-        "Project cancel button:",
-        !!cancelButton
-    );
-
-    console.log(
-        "========================================"
-    );
-
-
-    if (form) {
-
-        form.addEventListener(
-            "submit",
-            async (event) => {
-
-                event.preventDefault();
-
-                event.stopPropagation();
-
-
-                if (
-                    isSavingProject
-                ) {
-
-                    return;
-
-                }
-
-
-                if (!saveButton) {
-
-                    alert(
-                        "خطأ: زر حفظ المشروع غير موجود."
-                    );
-
-                    return;
-
-                }
-
-
-                await handleProjectSaveButton(
-                    saveButton
-                );
-
-            }
-        );
-
-    }
-
-
-    if (saveButton) {
-
-        saveButton.addEventListener(
-            "click",
-            async (event) => {
-
-                event.preventDefault();
-
-                event.stopPropagation();
-
-
-                console.log(
-                    "DIRECT PROJECT SAVE CLICK"
-                );
-
-
-                if (
-                    isSavingProject
-                ) {
-
-                    return;
-
-                }
-
-
-                await handleProjectSaveButton(
-                    saveButton
-                );
-
-            }
-        );
-
-    }
-
-
-    if (cancelButton) {
-
-        cancelButton.addEventListener(
-            "click",
-            (event) => {
-
-                event.preventDefault();
-
-                event.stopPropagation();
-
-                closeModal();
-
-            }
-        );
-
-    }
-
 }
 
 
@@ -2298,79 +1007,118 @@ function attachProjectFormEvents() {
    OPEN ADD PROJECT
    ========================================================= */
 
-function openAddProjectModal() {
-
-    console.log(
-        "OPEN ADD PROJECT"
-    );
-
+async function openAddProjectModal() {
 
     if (!checkAdmin()) {
-
         return;
-
     }
 
-
     openModal(
-        "إضافة مشروع جديد",
-        getProjectFormHTML()
+        "Add Project",
+        getProjectFormHTML(),
+        "PROJECT"
     );
 
+    const form =
+        document.getElementById(
+            "projectForm"
+        );
 
-    attachProjectFormEvents();
+    if (!form) {
+        return;
+    }
 
+    const titleInput =
+        document.getElementById(
+            "projectTitle"
+        );
+
+    if (titleInput) {
+
+        setTimeout(
+            () => titleInput.focus(),
+            50
+        );
+    }
+
+    form.addEventListener(
+        "submit",
+        handleProjectSubmit
+    );
+
+    const cancelButton =
+        document.getElementById(
+            "cancelProjectBtn"
+        );
+
+    if (cancelButton) {
+
+        cancelButton.addEventListener(
+            "click",
+            closeModal
+        );
+    }
+}
+
+
+/* =========================================================
+   PROJECT SUBMIT
+   ========================================================= */
+
+async function handleProjectSubmit(
+    event
+) {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+    if (isSavingProject) {
+        return;
+    }
+
+    isSavingProject = true;
 
     const button =
         document.getElementById(
             "saveProjectBtn"
         );
 
-
-    console.log(
-        "PROJECT FORM CREATED"
-    );
-
-
-    console.log(
-        "SAVE BUTTON EXISTS:",
-        !!button
-    );
-
-
     if (button) {
 
         button.disabled =
-            false;
+            true;
 
-        button.style.pointerEvents =
-            "auto";
-
-        button.style.cursor =
-            "pointer";
+        button.textContent =
+            "جاري الحفظ...";
 
     }
 
-}
+    try {
 
+        await saveProject();
 
-/* =========================================================
-   ADD PROJECT BUTTON
-   ========================================================= */
+    } finally {
 
-if (addProjectButton) {
+        isSavingProject =
+            false;
 
-    addProjectButton.addEventListener(
-        "click",
-        (event) => {
+        if (button) {
 
-            event.preventDefault();
+            button.disabled =
+                false;
 
-            openAddProjectModal();
+            const projectId =
+                document.getElementById(
+                    "projectId"
+                )?.value;
 
+            button.textContent =
+                projectId
+                    ? "حفظ التعديلات"
+                    : "إضافة المشروع";
         }
-    );
-
+    }
 }
 
 
@@ -2380,84 +1128,54 @@ if (addProjectButton) {
 
 async function saveProject() {
 
-    console.log(
-        "========================================"
-    );
-
-    console.log(
-        "SAVE PROJECT STARTED"
-    );
-
-
     if (!checkAdmin()) {
-
         return;
-
     }
 
-
-    const id =
+    const projectId =
         document.getElementById(
             "projectId"
-        )?.value.trim() || "";
-
+        )?.value.trim();
 
     const title =
         document.getElementById(
             "projectTitle"
-        )?.value.trim() || "";
-
+        )?.value.trim();
 
     const category =
         document.getElementById(
             "projectCategory"
-        )?.value || "gis";
-
-
-    const description =
-        document.getElementById(
-            "projectDescription"
-        )?.value.trim() || "";
-
-
-    const tools =
-        document.getElementById(
-            "projectTools"
-        )?.value.trim() || "";
-
+        )?.value;
 
     const status =
         document.getElementById(
             "projectStatus"
-        )?.value || "Planned";
+        )?.value;
 
+    const description =
+        document.getElementById(
+            "projectDescription"
+        )?.value.trim();
+
+    const tools =
+        document.getElementById(
+            "projectTools"
+        )?.value.trim();
 
     const imageUrl =
         document.getElementById(
             "projectImageUrl"
-        )?.value.trim() || "";
-
+        )?.value.trim();
 
     const projectLink =
         document.getElementById(
             "projectLink"
-        )?.value.trim() || "";
+        )?.value.trim();
 
 
-    console.log(
-        "PROJECT DATA:",
-        {
-            id,
-            title,
-            category,
-            description,
-            tools,
-            status,
-            imageUrl,
-            projectLink
-        }
-    );
-
+    /* =====================================================
+       VALIDATION
+       ===================================================== */
 
     if (!title) {
 
@@ -2465,8 +1183,11 @@ async function saveProject() {
             "من فضلك اكتب اسم المشروع."
         );
 
-        return;
+        document
+            .getElementById("projectTitle")
+            ?.focus();
 
+        return;
     }
 
 
@@ -2476,68 +1197,53 @@ async function saveProject() {
             "من فضلك اكتب وصف المشروع."
         );
 
-        return;
+        document
+            .getElementById("projectDescription")
+            ?.focus();
 
+        return;
     }
 
 
-    const user =
-        auth.currentUser;
-
-
-    if (!user) {
+    if (!category) {
 
         alert(
-            "Firebase Auth غير متصل بالحساب الحالي."
+            "من فضلك اختر تصنيف المشروع."
         );
 
         return;
-
     }
 
 
-    console.log(
-        "CURRENT USER UID:",
-        user.uid
-    );
+    /* =====================================================
+       DATA
+       ===================================================== */
 
-
-    if (
-        user.uid !==
-        ADMIN_UID
-    ) {
-
-        alert(
-            "حساب Firebase الحالي ليس حساب الأدمن."
-        );
-
-        return;
-
-    }
-
-
-    const data = {
+    const projectData = {
 
         title:
             title,
 
         category:
-            category,
+            category || "gis",
+
+        status:
+            status || "Completed",
 
         description:
             description,
 
         tools:
-            tools,
-
-        status:
-            status,
+            tools || "",
 
         imageUrl:
-            imageUrl,
+            imageUrl || "",
+
+        imagePath:
+            "",
 
         projectLink:
-            projectLink,
+            projectLink || "",
 
         updatedAt:
             serverTimestamp()
@@ -2547,103 +1253,62 @@ async function saveProject() {
 
     try {
 
-        console.log(
-            "Firebase write operation starting..."
-        );
+        if (projectId) {
 
-
-        if (id) {
-
-            console.log(
-                "UPDATING PROJECT:",
-                id
-            );
-
-
-            await updateDoc(
+            const projectRef =
                 doc(
                     db,
                     PROJECTS_COLLECTION,
-                    id
-                ),
-                data
+                    projectId
+                );
+
+            await updateDoc(
+                projectRef,
+                projectData
             );
-
-
-            console.log(
-                "PROJECT UPDATE SUCCESS"
-            );
-
 
             alert(
-                "تم تعديل المشروع بنجاح."
+                "تم تعديل المشروع بنجاح ✅"
             );
 
         } else {
 
-            console.log(
-                "ADDING NEW PROJECT"
-            );
-
-
-            data.createdAt =
+            projectData.createdAt =
                 serverTimestamp();
 
+            projectData.createdBy =
+                currentAdminUser.uid;
 
-            const newDocument =
-                await addDoc(
-                    collection(
-                        db,
-                        PROJECTS_COLLECTION
-                    ),
-                    data
-                );
-
-
-            console.log(
-                "NEW PROJECT ID:",
-                newDocument.id
+            await addDoc(
+                collection(
+                    db,
+                    PROJECTS_COLLECTION
+                ),
+                projectData
             );
-
 
             alert(
-                "تم إضافة المشروع بنجاح."
+                "تم إضافة المشروع بنجاح ✅"
             );
-
         }
 
 
         closeModal();
 
-
         await loadProjects();
-
 
         await updateDashboardStats();
 
 
-        console.log(
-            "SAVE PROJECT FINISHED SUCCESSFULLY"
-        );
-
-
     } catch (error) {
 
-        console.error(
-            "SAVE PROJECT ERROR:",
-            error
-        );
-
-
         alert(
-            "فشل حفظ المشروع.\n\n" +
             getFirebaseErrorMessage(
                 error
             )
         );
 
     }
-
 }
 
 
@@ -2654,26 +1319,8 @@ async function saveProject() {
 async function loadProjects() {
 
     if (!projectsContainer) {
-
         return;
-
     }
-
-
-    projectsContainer.innerHTML = `
-
-        <div class="loading-state">
-
-            <div class="loading-spinner"></div>
-
-            <p>
-                جاري تحميل المشاريع...
-            </p>
-
-        </div>
-
-    `;
-
 
     try {
 
@@ -2685,57 +1332,54 @@ async function loadProjects() {
                 )
             );
 
-
-        const projects = [];
-
-
-        snapshot.forEach(
-            (item) => {
-
-                projects.push({
-
-                    id:
-                        item.id,
-
+        const projects =
+            snapshot.docs.map(
+                item => ({
+                    id: item.id,
                     ...item.data()
-
-                });
-
-            }
-        );
+                })
+            );
 
 
         projects.sort(
             (a, b) => {
 
-                return (
-                    (b.createdAt?.seconds || 0) -
-                    (a.createdAt?.seconds || 0)
-                );
+                const aTime =
+                    a.createdAt?.seconds ||
+                    0;
 
+                const bTime =
+                    b.createdAt?.seconds ||
+                    0;
+
+                return bTime - aTime;
             }
         );
 
 
-        if (
-            projects.length ===
-            0
-        ) {
+        if (projectsCount) {
+
+            projectsCount.textContent =
+                projects.length;
+        }
+
+
+        if (!projects.length) {
 
             projectsContainer.innerHTML = `
 
                 <div class="empty-state">
 
                     <div class="empty-icon">
-                        📁
+                        🗂️
                     </div>
 
                     <h3>
-                        لا توجد مشاريع
+                        No projects yet
                     </h3>
 
                     <p>
-                        ابدأ بإضافة أول مشروع.
+                        أضف أول مشروع إلى البورتفوليو.
                     </p>
 
                     <button
@@ -2743,40 +1387,37 @@ async function loadProjects() {
                         data-action="add-project"
                         type="button"
                     >
-                        + إضافة أول مشروع
+                        + Add Your First Project
                     </button>
 
                 </div>
 
             `;
 
-        } else {
-
-            projectsContainer.innerHTML =
-                projects
-                    .map(
-                        createProjectCard
-                    )
-                    .join("");
-
+            return;
         }
 
 
-        if (projectsCount) {
+        projectsContainer.className =
+            "projects-grid";
 
-            projectsCount.textContent =
-                projects.length;
-
-        }
+        projectsContainer.innerHTML =
+            projects
+                .map(
+                    createProjectCard
+                )
+                .join("");
 
 
     } catch (error) {
 
         console.error(
-            "LOAD PROJECTS ERROR:",
+            "loadProjects error:",
             error
         );
 
+        projectsContainer.className =
+            "content-placeholder";
 
         projectsContainer.innerHTML = `
 
@@ -2787,7 +1428,7 @@ async function loadProjects() {
                 </div>
 
                 <h3>
-                    حدث خطأ
+                    Error Loading Projects
                 </h3>
 
                 <p>
@@ -2798,12 +1439,27 @@ async function loadProjects() {
                     )}
                 </p>
 
+                <button
+                    class="primary-button"
+                    id="retryProjectsButton"
+                    type="button"
+                >
+                    إعادة المحاولة
+                </button>
+
             </div>
 
         `;
 
+        document
+            .getElementById(
+                "retryProjectsButton"
+            )
+            ?.addEventListener(
+                "click",
+                loadProjects
+            );
     }
-
 }
 
 
@@ -2812,190 +1468,225 @@ async function loadProjects() {
    ========================================================= */
 
 function createProjectCard(
-    project
+    project,
+    index
 ) {
 
-    const categories = {
+    const image =
+        project.imageUrl ||
+        "";
 
-        gis:
-            "GIS",
-
-        surveying:
-            "Surveying",
-
-        "remote-sensing":
-            "Remote Sensing",
-
-        programming:
-            "Programming",
-
-        civil3d:
-            "Civil 3D"
-
-    };
-
+    const title =
+        project.title ||
+        "Untitled Project";
 
     const category =
-        categories[
-            project.category
-        ] ||
         project.category ||
-        "Other";
+        "other";
+
+    const status =
+        project.status ||
+        "Completed";
+
+    const description =
+        project.description ||
+        "";
+
+    const tools =
+        project.tools ||
+        "";
+
+    const projectLink =
+        project.projectLink ||
+        "";
 
 
-    const image =
-        project.imageUrl
+    const toolList =
+        tools
+            .split(",")
+            .map(
+                tool => tool.trim()
+            )
+            .filter(Boolean);
+
+
+    const toolsHTML =
+        toolList.length
             ? `
-
-                <img
-                    src="${escapeHTML(
-                        project.imageUrl
-                    )}"
-                    alt="${escapeHTML(
-                        project.title
-                    )}"
-                    class="project-admin-image"
-                >
-
-            `
-            : `
-
-                <div
-                    class="project-admin-placeholder"
-                >
-                    📁
+                <div class="project-tools">
+                    ${toolList
+                        .map(
+                            tool => `
+                                <span>
+                                    ${escapeHTML(tool)}
+                                </span>
+                            `
+                        )
+                        .join("")}
                 </div>
+            `
+            : "";
 
-            `;
+
+    const imageHTML =
+        image
+            ? `
+                <div
+                    style="
+                        width:100%;
+                        height:170px;
+                        margin-bottom:15px;
+                        overflow:hidden;
+                        border-radius:11px;
+                        background:#081525;
+                    "
+                >
+
+                    <img
+                        src="${escapeHTML(image)}"
+                        alt="${escapeHTML(title)}"
+                        style="
+                            width:100%;
+                            height:100%;
+                            object-fit:cover;
+                        "
+                        onerror="this.style.display='none';"
+                    >
+
+                </div>
+            `
+            : "";
+
+
+    const linkHTML =
+        projectLink
+            ? `
+                <a
+                    href="${escapeHTML(projectLink)}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn-secondary"
+                    style="
+                        min-height:36px;
+                        padding:8px 11px;
+                        display:inline-flex;
+                        align-items:center;
+                        justify-content:center;
+                        border-radius:9px;
+                        font-size:11px;
+                        font-weight:700;
+                    "
+                >
+                    🌐 View
+                </a>
+            `
+            : "";
 
 
     return `
 
         <article
-            class="admin-project-card"
+            class="project-card"
+            data-project-id="${escapeHTML(project.id)}"
         >
 
-            <div
-                class="admin-project-image"
-            >
-
-                ${image}
-
-            </div>
+            ${imageHTML}
 
 
-            <div
-                class="admin-project-content"
-            >
+            <div>
 
-                <div
-                    class="project-top"
+                <span
+                    style="
+                        display:block;
+                        margin-bottom:7px;
+                        color:var(--primary);
+                        font-size:9px;
+                        font-weight:800;
+                        letter-spacing:1px;
+                        text-transform:uppercase;
+                    "
                 >
-
-                    <span
-                        class="project-category"
-                    >
-                        ${escapeHTML(
-                            category
-                        )}
-                    </span>
+                    PROJECT ${index + 1}
+                </span>
 
 
-                    <span
-                        class="project-status"
-                    >
-                        ${escapeHTML(
-                            project.status ||
-                            "Planned"
-                        )}
-                    </span>
-
-                </div>
-
-
-                <h3>
-                    ${escapeHTML(
-                        project.title ||
-                        "Untitled Project"
-                    )}
+                <h3
+                    style="
+                        margin-bottom:8px;
+                        font-size:17px;
+                    "
+                >
+                    ${escapeHTML(title)}
                 </h3>
 
 
-                <p>
-                    ${escapeHTML(
-                        project.description ||
-                        ""
-                    )}
+                <p
+                    style="
+                        color:var(--muted);
+                        font-size:11px;
+                        line-height:1.7;
+                    "
+                >
+                    ${escapeHTML(description)}
                 </p>
 
 
-                ${
-                    project.tools
-                        ? `
-
-                            <div
-                                class="project-tools"
-                            >
-
-                                <strong>
-                                    Tools:
-                                </strong>
-
-                                ${escapeHTML(
-                                    project.tools
-                                )}
-
-                            </div>
-
-                        `
-                        : ""
-                }
+                <div
+                    style="
+                        margin-top:10px;
+                        color:var(--muted);
+                        font-size:10px;
+                    "
+                >
+                    Category:
+                    <strong
+                        style="color:var(--muted-light);"
+                    >
+                        ${escapeHTML(category)}
+                    </strong>
+                </div>
 
 
                 <div
-                    class="project-card-actions"
+                    style="
+                        margin-top:5px;
+                        color:var(--muted);
+                        font-size:10px;
+                    "
                 >
+                    Status:
+                    <strong
+                        style="color:var(--primary);"
+                    >
+                        ${escapeHTML(status)}
+                    </strong>
+                </div>
+
+
+                ${toolsHTML}
+
+
+                <div class="card-actions">
 
                     <button
-                        class="btn-edit edit-project-btn"
-                        data-id="${escapeHTML(
-                            project.id
-                        )}"
                         type="button"
+                        class="edit-project-btn"
+                        data-id="${escapeHTML(project.id)}"
                     >
-                        ✏️ تعديل
+                        ✏️ Edit
                     </button>
 
 
                     <button
-                        class="btn-delete delete-project-btn"
-                        data-id="${escapeHTML(
-                            project.id
-                        )}"
                         type="button"
+                        class="delete-project-btn"
+                        data-id="${escapeHTML(project.id)}"
                     >
-                        🗑️ حذف
+                        🗑️ Delete
                     </button>
 
 
-                    ${
-                        project.projectLink
-                            ? `
-
-                                <a
-                                    href="${escapeHTML(
-                                        project.projectLink
-                                    )}"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="btn-view"
-                                >
-                                    🔗 فتح
-                                </a>
-
-                            `
-                            : ""
-                    }
+                    ${linkHTML}
 
                 </div>
 
@@ -3004,7 +1695,6 @@ function createProjectCard(
         </article>
 
     `;
-
 }
 
 
@@ -3017,115 +1707,91 @@ async function editProject(
 ) {
 
     if (!checkAdmin()) {
-
         return;
-
     }
-
 
     if (!projectId) {
-
-        alert(
-            "معرف المشروع غير موجود."
-        );
-
         return;
-
     }
-
 
     try {
 
-        const projectReference =
+        const projectRef =
             doc(
                 db,
                 PROJECTS_COLLECTION,
                 projectId
             );
 
-
-        const projectSnapshot =
+        const snapshot =
             await getDoc(
-                projectReference
+                projectRef
             );
 
-
-        if (
-            !projectSnapshot.exists()
-        ) {
+        if (!snapshot.exists()) {
 
             alert(
-                "لم يتم العثور على المشروع."
+                "المشروع غير موجود."
             );
 
             return;
-
         }
-
 
         const project = {
 
             id:
-                projectSnapshot.id,
+                snapshot.id,
 
-            ...projectSnapshot.data()
+            ...snapshot.data()
 
         };
 
 
         openModal(
-            "تعديل المشروع",
+            "Edit Project",
             getProjectFormHTML(
                 project
-            )
+            ),
+            "PROJECT"
         );
 
 
-        attachProjectFormEvents();
-
-
-        const button =
+        const form =
             document.getElementById(
-                "saveProjectBtn"
+                "projectForm"
             );
 
+        if (form) {
 
-        if (button) {
-
-            button.disabled =
-                false;
-
-            button.style.pointerEvents =
-                "auto";
-
-            button.style.cursor =
-                "pointer";
-
+            form.addEventListener(
+                "submit",
+                handleProjectSubmit
+            );
         }
 
 
-        console.log(
-            "PROJECT EDIT FORM OPENED:",
-            project
-        );
+        const cancelButton =
+            document.getElementById(
+                "cancelProjectBtn"
+            );
+
+        if (cancelButton) {
+
+            cancelButton.addEventListener(
+                "click",
+                closeModal
+            );
+        }
+
 
     } catch (error) {
 
-        console.error(
-            "EDIT PROJECT ERROR:",
-            error
-        );
-
-
         alert(
-            "حدث خطأ أثناء تحميل المشروع.\n\n" +
             getFirebaseErrorMessage(
                 error
             )
         );
-
     }
-
 }
 
 
@@ -3138,43 +1804,26 @@ async function deleteProject(
 ) {
 
     if (!checkAdmin()) {
-
         return;
-
     }
 
-
     if (!projectId) {
-
-        alert(
-            "معرف المشروع غير موجود."
-        );
-
         return;
-
     }
 
 
     const confirmed =
         confirm(
-            "هل أنت متأكد من حذف المشروع؟\n\nلا يمكن التراجع عن هذه العملية."
+            "هل أنت متأكد أنك تريد حذف هذا المشروع؟"
         );
 
 
     if (!confirmed) {
-
         return;
-
     }
 
 
     try {
-
-        console.log(
-            "DELETING PROJECT:",
-            projectId
-        );
-
 
         await deleteDoc(
             doc(
@@ -3185,44 +1834,69 @@ async function deleteProject(
         );
 
 
-        console.log(
-            "PROJECT DELETE SUCCESS"
-        );
-
-
         alert(
-            "تم حذف المشروع بنجاح."
+            "تم حذف المشروع بنجاح ✅"
         );
 
 
         await loadProjects();
-
 
         await updateDashboardStats();
 
 
     } catch (error) {
 
-        console.error(
-            "DELETE PROJECT ERROR:",
-            error
-        );
-
-
         alert(
-            "فشل حذف المشروع.\n\n" +
             getFirebaseErrorMessage(
                 error
             )
         );
-
     }
-
 }
 
 
 /* =========================================================
-   CERTIFICATE FORM HTML
+   PROJECT CARD ACTIONS
+   ========================================================= */
+
+document.addEventListener(
+    "click",
+    async event => {
+
+        const editButton =
+            event.target.closest(
+                ".edit-project-btn"
+            );
+
+        if (editButton) {
+
+            await editProject(
+                editButton.dataset.id
+            );
+
+            return;
+        }
+
+
+        const deleteButton =
+            event.target.closest(
+                ".delete-project-btn"
+            );
+
+        if (deleteButton) {
+
+            await deleteProject(
+                deleteButton.dataset.id
+            );
+
+            return;
+        }
+    }
+);
+
+
+/* =========================================================
+   CERTIFICATE FORM
    ========================================================= */
 
 function getCertificateFormHTML(
@@ -3230,7 +1904,28 @@ function getCertificateFormHTML(
 ) {
 
     const isEdit =
-        certificate !== null;
+        Boolean(certificate);
+
+    const certificateId =
+        certificate?.id || "";
+
+    const title =
+        certificate?.title || "";
+
+    const issuer =
+        certificate?.issuer || "";
+
+    const date =
+        certificate?.date || "";
+
+    const description =
+        certificate?.description || "";
+
+    const imageUrl =
+        certificate?.imageUrl || "";
+
+    const certificateUrl =
+        certificate?.certificateUrl || "";
 
 
     return `
@@ -3244,26 +1939,22 @@ function getCertificateFormHTML(
             <input
                 type="hidden"
                 id="certificateId"
-                value="${escapeHTML(
-                    certificate?.id || ""
-                )}"
+                value="${escapeHTML(certificateId)}"
             >
 
 
             <div class="form-group">
 
-                <label>
-                    Certificate Name
+                <label for="certificateTitle">
+                    Certificate Title
                 </label>
 
                 <input
                     type="text"
                     id="certificateTitle"
-                    placeholder="ArcGIS Pro Training"
-                    value="${escapeHTML(
-                        certificate?.title || ""
-                    )}"
-                    required
+                    placeholder="مثال: ArcGIS Pro Training"
+                    value="${escapeHTML(title)}"
+                    autocomplete="off"
                 >
 
             </div>
@@ -3271,18 +1962,16 @@ function getCertificateFormHTML(
 
             <div class="form-group">
 
-                <label>
-                    Issuing Organization
+                <label for="certificateIssuer">
+                    Issuer
                 </label>
 
                 <input
                     type="text"
                     id="certificateIssuer"
-                    placeholder="GeoSteps"
-                    value="${escapeHTML(
-                        certificate?.issuer || ""
-                    )}"
-                    required
+                    placeholder="مثال: GeoSteps"
+                    value="${escapeHTML(issuer)}"
+                    autocomplete="off"
                 >
 
             </div>
@@ -3290,7 +1979,7 @@ function getCertificateFormHTML(
 
             <div class="form-group">
 
-                <label>
+                <label for="certificateDate">
                     Date
                 </label>
 
@@ -3298,9 +1987,8 @@ function getCertificateFormHTML(
                     type="text"
                     id="certificateDate"
                     placeholder="2026"
-                    value="${escapeHTML(
-                        certificate?.date || ""
-                    )}"
+                    value="${escapeHTML(date)}"
+                    autocomplete="off"
                 >
 
             </div>
@@ -3308,24 +1996,21 @@ function getCertificateFormHTML(
 
             <div class="form-group">
 
-                <label>
+                <label for="certificateDescription">
                     Description
                 </label>
 
                 <textarea
                     id="certificateDescription"
-                    rows="4"
-                    placeholder="وصف مختصر للشهادة..."
-                >${escapeHTML(
-                    certificate?.description || ""
-                )}</textarea>
+                    placeholder="اكتب وصف الشهادة..."
+                >${escapeHTML(description)}</textarea>
 
             </div>
 
 
             <div class="form-group">
 
-                <label>
+                <label for="certificateImageUrl">
                     Certificate Image URL
                 </label>
 
@@ -3333,21 +2018,16 @@ function getCertificateFormHTML(
                     type="text"
                     id="certificateImageUrl"
                     placeholder="https://..."
-                    value="${escapeHTML(
-                        certificate?.imageUrl || ""
-                    )}"
+                    value="${escapeHTML(imageUrl)}"
+                    autocomplete="off"
                 >
-
-                <small>
-                    رابط صورة الشهادة.
-                </small>
 
             </div>
 
 
             <div class="form-group">
 
-                <label>
+                <label for="certificateUrl">
                     Certificate Link
                 </label>
 
@@ -3355,9 +2035,8 @@ function getCertificateFormHTML(
                     type="text"
                     id="certificateUrl"
                     placeholder="https://..."
-                    value="${escapeHTML(
-                        certificate?.certificateUrl || ""
-                    )}"
+                    value="${escapeHTML(certificateUrl)}"
+                    autocomplete="off"
                 >
 
             </div>
@@ -3391,155 +2070,6 @@ function getCertificateFormHTML(
         </form>
 
     `;
-
-}
-
-
-/* =========================================================
-   CONNECT CERTIFICATE FORM DIRECTLY
-   ========================================================= */
-
-function attachCertificateFormEvents() {
-
-    const form =
-        document.getElementById(
-            "certificateForm"
-        );
-
-
-    const saveButton =
-        document.getElementById(
-            "saveCertificateBtn"
-        );
-
-
-    const cancelButton =
-        document.getElementById(
-            "cancelCertificateBtn"
-        );
-
-
-    console.log(
-        "========================================"
-    );
-
-    console.log(
-        "ATTACH CERTIFICATE FORM EVENTS"
-    );
-
-    console.log(
-        "Certificate form:",
-        !!form
-    );
-
-    console.log(
-        "Certificate save button:",
-        !!saveButton
-    );
-
-    console.log(
-        "Certificate cancel button:",
-        !!cancelButton
-    );
-
-    console.log(
-        "========================================"
-    );
-
-
-    if (form) {
-
-        form.addEventListener(
-            "submit",
-            async (event) => {
-
-                event.preventDefault();
-
-                event.stopPropagation();
-
-
-                if (
-                    isSavingCertificate
-                ) {
-
-                    return;
-
-                }
-
-
-                if (!saveButton) {
-
-                    alert(
-                        "خطأ: زر حفظ الشهادة غير موجود."
-                    );
-
-                    return;
-
-                }
-
-
-                await handleCertificateSaveButton(
-                    saveButton
-                );
-
-            }
-        );
-
-    }
-
-
-    if (saveButton) {
-
-        saveButton.addEventListener(
-            "click",
-            async (event) => {
-
-                event.preventDefault();
-
-                event.stopPropagation();
-
-
-                console.log(
-                    "DIRECT CERTIFICATE SAVE CLICK"
-                );
-
-
-                if (
-                    isSavingCertificate
-                ) {
-
-                    return;
-
-                }
-
-
-                await handleCertificateSaveButton(
-                    saveButton
-                );
-
-            }
-        );
-
-    }
-
-
-    if (cancelButton) {
-
-        cancelButton.addEventListener(
-            "click",
-            (event) => {
-
-                event.preventDefault();
-
-                event.stopPropagation();
-
-                closeModal();
-
-            }
-        );
-
-    }
-
 }
 
 
@@ -3547,27 +2077,81 @@ function attachCertificateFormEvents() {
    OPEN ADD CERTIFICATE
    ========================================================= */
 
-function openAddCertificateModal() {
+async function openAddCertificateModal() {
 
-    console.log(
-        "OPEN ADD CERTIFICATE"
+    if (!checkAdmin()) {
+        return;
+    }
+
+    openModal(
+        "Add Certificate",
+        getCertificateFormHTML(),
+        "CERTIFICATE"
     );
 
 
-    if (!checkAdmin()) {
+    const form =
+        document.getElementById(
+            "certificateForm"
+        );
 
+    if (!form) {
         return;
-
     }
 
 
-    openModal(
-        "إضافة شهادة جديدة",
-        getCertificateFormHTML()
+    const titleInput =
+        document.getElementById(
+            "certificateTitle"
+        );
+
+    if (titleInput) {
+
+        setTimeout(
+            () => titleInput.focus(),
+            50
+        );
+    }
+
+
+    form.addEventListener(
+        "submit",
+        handleCertificateSubmit
     );
 
 
-    attachCertificateFormEvents();
+    const cancelButton =
+        document.getElementById(
+            "cancelCertificateBtn"
+        );
+
+    if (cancelButton) {
+
+        cancelButton.addEventListener(
+            "click",
+            closeModal
+        );
+    }
+}
+
+
+/* =========================================================
+   CERTIFICATE SUBMIT
+   ========================================================= */
+
+async function handleCertificateSubmit(
+    event
+) {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+    if (isSavingCertificate) {
+        return;
+    }
+
+    isSavingCertificate = true;
 
 
     const button =
@@ -3576,50 +2160,45 @@ function openAddCertificateModal() {
         );
 
 
-    console.log(
-        "CERTIFICATE FORM CREATED"
-    );
-
-
-    console.log(
-        "SAVE CERTIFICATE BUTTON EXISTS:",
-        !!button
-    );
-
-
     if (button) {
 
         button.disabled =
-            false;
+            true;
 
-        button.style.pointerEvents =
-            "auto";
-
-        button.style.cursor =
-            "pointer";
+        button.textContent =
+            "جاري الحفظ...";
 
     }
 
-}
+
+    try {
+
+        await saveCertificate();
+
+    } finally {
+
+        isSavingCertificate =
+            false;
 
 
-/* =========================================================
-   ADD CERTIFICATE BUTTON
-   ========================================================= */
+        if (button) {
 
-if (addCertificateButton) {
+            button.disabled =
+                false;
 
-    addCertificateButton.addEventListener(
-        "click",
-        (event) => {
 
-            event.preventDefault();
+            const certificateId =
+                document.getElementById(
+                    "certificateId"
+                )?.value;
 
-            openAddCertificateModal();
 
+            button.textContent =
+                certificateId
+                    ? "حفظ التعديلات"
+                    : "إضافة الشهادة";
         }
-    );
-
+    }
 }
 
 
@@ -3629,76 +2208,51 @@ if (addCertificateButton) {
 
 async function saveCertificate() {
 
-    console.log(
-        "========================================"
-    );
-
-    console.log(
-        "SAVE CERTIFICATE STARTED"
-    );
-
-
     if (!checkAdmin()) {
-
         return;
-
     }
 
 
-    const id =
+    const certificateId =
         document.getElementById(
             "certificateId"
-        )?.value.trim() || "";
+        )?.value.trim();
 
 
     const title =
         document.getElementById(
             "certificateTitle"
-        )?.value.trim() || "";
+        )?.value.trim();
 
 
     const issuer =
         document.getElementById(
             "certificateIssuer"
-        )?.value.trim() || "";
+        )?.value.trim();
 
 
     const date =
         document.getElementById(
             "certificateDate"
-        )?.value.trim() || "";
+        )?.value.trim();
 
 
     const description =
         document.getElementById(
             "certificateDescription"
-        )?.value.trim() || "";
+        )?.value.trim();
 
 
     const imageUrl =
         document.getElementById(
             "certificateImageUrl"
-        )?.value.trim() || "";
+        )?.value.trim();
 
 
     const certificateUrl =
         document.getElementById(
             "certificateUrl"
-        )?.value.trim() || "";
-
-
-    console.log(
-        "CERTIFICATE DATA:",
-        {
-            id,
-            title,
-            issuer,
-            date,
-            description,
-            imageUrl,
-            certificateUrl
-        }
-    );
+        )?.value.trim();
 
 
     if (!title) {
@@ -3707,8 +2261,13 @@ async function saveCertificate() {
             "من فضلك اكتب اسم الشهادة."
         );
 
-        return;
+        document
+            .getElementById(
+                "certificateTitle"
+            )
+            ?.focus();
 
+        return;
     }
 
 
@@ -3718,47 +2277,33 @@ async function saveCertificate() {
             "من فضلك اكتب الجهة المانحة."
         );
 
-        return;
+        document
+            .getElementById(
+                "certificateIssuer"
+            )
+            ?.focus();
 
+        return;
     }
 
 
-    const user =
-        auth.currentUser;
-
-
-    if (!user) {
+    if (!description) {
 
         alert(
-            "Firebase Auth غير متصل بالحساب الحالي."
+            "من فضلك اكتب وصف الشهادة."
         );
 
-        return;
+        document
+            .getElementById(
+                "certificateDescription"
+            )
+            ?.focus();
 
+        return;
     }
 
 
-    console.log(
-        "CURRENT USER UID:",
-        user.uid
-    );
-
-
-    if (
-        user.uid !==
-        ADMIN_UID
-    ) {
-
-        alert(
-            "حساب Firebase الحالي ليس حساب الأدمن."
-        );
-
-        return;
-
-    }
-
-
-    const data = {
+    const certificateData = {
 
         title:
             title,
@@ -3767,16 +2312,16 @@ async function saveCertificate() {
             issuer,
 
         date:
-            date,
+            date || "",
 
         description:
             description,
 
         imageUrl:
-            imageUrl,
+            imageUrl || "",
 
         certificateUrl:
-            certificateUrl,
+            certificateUrl || "",
 
         updatedAt:
             serverTimestamp()
@@ -3786,98 +2331,65 @@ async function saveCertificate() {
 
     try {
 
-        if (id) {
+        if (certificateId) {
 
-            console.log(
-                "UPDATING CERTIFICATE:",
-                id
-            );
-
-
-            await updateDoc(
+            const certificateRef =
                 doc(
                     db,
                     CERTIFICATES_COLLECTION,
-                    id
-                ),
-                data
-            );
+                    certificateId
+                );
 
 
-            console.log(
-                "CERTIFICATE UPDATE SUCCESS"
+            await updateDoc(
+                certificateRef,
+                certificateData
             );
 
 
             alert(
-                "تم تعديل الشهادة بنجاح."
+                "تم تعديل الشهادة بنجاح ✅"
             );
 
         } else {
 
-            console.log(
-                "ADDING NEW CERTIFICATE"
-            );
-
-
-            data.createdAt =
+            certificateData.createdAt =
                 serverTimestamp();
 
-
-            const newDocument =
-                await addDoc(
-                    collection(
-                        db,
-                        CERTIFICATES_COLLECTION
-                    ),
-                    data
-                );
+            certificateData.createdBy =
+                currentAdminUser.uid;
 
 
-            console.log(
-                "NEW CERTIFICATE ID:",
-                newDocument.id
+            await addDoc(
+                collection(
+                    db,
+                    CERTIFICATES_COLLECTION
+                ),
+                certificateData
             );
 
 
             alert(
-                "تم إضافة الشهادة بنجاح."
+                "تم إضافة الشهادة بنجاح ✅"
             );
-
         }
 
 
         closeModal();
 
-
         await loadCertificates();
-
 
         await updateDashboardStats();
 
 
-        console.log(
-            "SAVE CERTIFICATE FINISHED SUCCESSFULLY"
-        );
-
-
     } catch (error) {
 
-        console.error(
-            "SAVE CERTIFICATE ERROR:",
-            error
-        );
-
-
         alert(
-            "فشل حفظ الشهادة.\n\n" +
             getFirebaseErrorMessage(
                 error
             )
         );
-
     }
-
 }
 
 
@@ -3888,25 +2400,8 @@ async function saveCertificate() {
 async function loadCertificates() {
 
     if (!certificatesContainer) {
-
         return;
-
     }
-
-
-    certificatesContainer.innerHTML = `
-
-        <div class="loading-state">
-
-            <div class="loading-spinner"></div>
-
-            <p>
-                جاري تحميل الشهادات...
-            </p>
-
-        </div>
-
-    `;
 
 
     try {
@@ -3920,56 +2415,62 @@ async function loadCertificates() {
             );
 
 
-        const certificates = [];
-
-
-        snapshot.forEach(
-            (item) => {
-
-                certificates.push({
+        const certificates =
+            snapshot.docs.map(
+                item => ({
 
                     id:
                         item.id,
 
                     ...item.data()
 
-                });
-
-            }
-        );
+                })
+            );
 
 
         certificates.sort(
             (a, b) => {
 
-                return (
-                    (b.createdAt?.seconds || 0) -
-                    (a.createdAt?.seconds || 0)
-                );
+                const aTime =
+                    a.createdAt?.seconds ||
+                    0;
 
+                const bTime =
+                    b.createdAt?.seconds ||
+                    0;
+
+                return bTime - aTime;
             }
         );
 
 
-        if (
-            certificates.length ===
-            0
-        ) {
+        if (certificatesCount) {
+
+            certificatesCount.textContent =
+                certificates.length;
+        }
+
+
+        if (!certificates.length) {
+
+            certificatesContainer.className =
+                "content-placeholder";
+
 
             certificatesContainer.innerHTML = `
 
                 <div class="empty-state">
 
                     <div class="empty-icon">
-                        🎓
+                        🏆
                     </div>
 
                     <h3>
-                        لا توجد شهادات
+                        No certificates yet
                     </h3>
 
                     <p>
-                        ابدأ بإضافة أول شهادة.
+                        أضف أول شهادة إلى البورتفوليو.
                     </p>
 
                     <button
@@ -3977,39 +2478,39 @@ async function loadCertificates() {
                         data-action="add-certificate"
                         type="button"
                     >
-                        + إضافة أول شهادة
+                        + Add Your First Certificate
                     </button>
 
                 </div>
 
             `;
 
-        } else {
-
-            certificatesContainer.innerHTML =
-                certificates
-                    .map(
-                        createCertificateCard
-                    )
-                    .join("");
-
+            return;
         }
 
 
-        if (certificatesCount) {
+        certificatesContainer.className =
+            "certificates-grid";
 
-            certificatesCount.textContent =
-                certificates.length;
 
-        }
+        certificatesContainer.innerHTML =
+            certificates
+                .map(
+                    createCertificateCard
+                )
+                .join("");
 
 
     } catch (error) {
 
         console.error(
-            "LOAD CERTIFICATES ERROR:",
+            "loadCertificates error:",
             error
         );
+
+
+        certificatesContainer.className =
+            "content-placeholder";
 
 
         certificatesContainer.innerHTML = `
@@ -4021,7 +2522,7 @@ async function loadCertificates() {
                 </div>
 
                 <h3>
-                    حدث خطأ
+                    Error Loading Certificates
                 </h3>
 
                 <p>
@@ -4032,12 +2533,28 @@ async function loadCertificates() {
                     )}
                 </p>
 
+                <button
+                    class="primary-button"
+                    id="retryCertificatesButton"
+                    type="button"
+                >
+                    إعادة المحاولة
+                </button>
+
             </div>
 
         `;
 
-    }
 
+        document
+            .getElementById(
+                "retryCertificatesButton"
+            )
+            ?.addEventListener(
+                "click",
+                loadCertificates
+            );
+    }
 }
 
 
@@ -4046,156 +2563,190 @@ async function loadCertificates() {
    ========================================================= */
 
 function createCertificateCard(
-    certificate
+    certificate,
+    index
 ) {
 
-    const image =
-        certificate.imageUrl
+    const title =
+        certificate.title ||
+        "Untitled Certificate";
+
+
+    const issuer =
+        certificate.issuer ||
+        "";
+
+
+    const date =
+        certificate.date ||
+        "";
+
+
+    const description =
+        certificate.description ||
+        "";
+
+
+    const imageUrl =
+        certificate.imageUrl ||
+        "";
+
+
+    const certificateUrl =
+        certificate.certificateUrl ||
+        "";
+
+
+    const imageHTML =
+        imageUrl
             ? `
 
-                <img
-                    src="${escapeHTML(
-                        certificate.imageUrl
-                    )}"
-                    alt="${escapeHTML(
-                        certificate.title
-                    )}"
-                    class="certificate-admin-image"
-                >
-
-            `
-            : `
-
                 <div
-                    class="certificate-placeholder"
+                    style="
+                        width:100%;
+                        height:170px;
+                        margin-bottom:15px;
+                        overflow:hidden;
+                        border-radius:11px;
+                        background:#081525;
+                    "
                 >
-                    🎓
+
+                    <img
+                        src="${escapeHTML(imageUrl)}"
+                        alt="${escapeHTML(title)}"
+                        style="
+                            width:100%;
+                            height:100%;
+                            object-fit:cover;
+                        "
+                        onerror="this.style.display='none';"
+                    >
+
                 </div>
 
-            `;
+            `
+            : "";
+
+
+    const linkHTML =
+        certificateUrl
+            ? `
+
+                <a
+                    href="${escapeHTML(certificateUrl)}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn-secondary"
+                    style="
+                        min-height:36px;
+                        padding:8px 11px;
+                        display:inline-flex;
+                        align-items:center;
+                        justify-content:center;
+                        border-radius:9px;
+                        font-size:11px;
+                        font-weight:700;
+                    "
+                >
+                    📄 View
+                </a>
+
+            `
+            : "";
 
 
     return `
 
         <article
-            class="admin-certificate-card"
+            class="certificate-card"
+            data-certificate-id="${escapeHTML(certificate.id)}"
         >
 
-            <div
-                class="certificate-admin-image-wrapper"
-            >
-
-                ${image}
-
-            </div>
+            ${imageHTML}
 
 
-            <div
-                class="certificate-admin-content"
-            >
+            <div>
 
-                <h3>
-                    ${escapeHTML(
-                        certificate.title ||
-                        "Certificate"
-                    )}
+                <span
+                    style="
+                        display:block;
+                        margin-bottom:7px;
+                        color:var(--primary);
+                        font-size:9px;
+                        font-weight:800;
+                        letter-spacing:1px;
+                        text-transform:uppercase;
+                    "
+                >
+                    CERTIFICATE ${index + 1}
+                </span>
+
+
+                <h3
+                    style="
+                        margin-bottom:8px;
+                        font-size:17px;
+                    "
+                >
+                    ${escapeHTML(title)}
                 </h3>
 
 
-                <p>
-
-                    <strong>
-                        Issuer:
-                    </strong>
-
-                    ${escapeHTML(
-                        certificate.issuer ||
-                        ""
-                    )}
-
+                <p
+                    style="
+                        color:var(--muted-light);
+                        font-size:11px;
+                        margin-bottom:5px;
+                    "
+                >
+                    ${escapeHTML(issuer)}
                 </p>
 
 
-                ${
-                    certificate.date
-                        ? `
-
-                            <p>
-
-                                <strong>
-                                    Date:
-                                </strong>
-
-                                ${escapeHTML(
-                                    certificate.date
-                                )}
-
-                            </p>
-
-                        `
-                        : ""
-                }
-
-
-                ${
-                    certificate.description
-                        ? `
-
-                            <p>
-                                ${escapeHTML(
-                                    certificate.description
-                                )}
-                            </p>
-
-                        `
-                        : ""
-                }
-
-
-                <div
-                    class="certificate-card-actions"
+                <p
+                    style="
+                        color:var(--primary);
+                        font-size:10px;
+                        margin-bottom:8px;
+                    "
                 >
+                    ${escapeHTML(date)}
+                </p>
+
+
+                <p
+                    style="
+                        color:var(--muted);
+                        font-size:11px;
+                        line-height:1.7;
+                    "
+                >
+                    ${escapeHTML(description)}
+                </p>
+
+
+                <div class="card-actions">
 
                     <button
-                        class="btn-edit edit-certificate-btn"
-                        data-id="${escapeHTML(
-                            certificate.id
-                        )}"
                         type="button"
+                        class="edit-certificate-btn"
+                        data-id="${escapeHTML(certificate.id)}"
                     >
-                        ✏️ تعديل
+                        ✏️ Edit
                     </button>
 
 
                     <button
-                        class="btn-delete delete-certificate-btn"
-                        data-id="${escapeHTML(
-                            certificate.id
-                        )}"
                         type="button"
+                        class="delete-certificate-btn"
+                        data-id="${escapeHTML(certificate.id)}"
                     >
-                        🗑️ حذف
+                        🗑️ Delete
                     </button>
 
 
-                    ${
-                        certificate.certificateUrl
-                            ? `
-
-                                <a
-                                    href="${escapeHTML(
-                                        certificate.certificateUrl
-                                    )}"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="btn-view"
-                                >
-                                    🔗 الشهادة
-                                </a>
-
-                            `
-                            : ""
-                    }
+                    ${linkHTML}
 
                 </div>
 
@@ -4204,7 +2755,6 @@ function createCertificateCard(
         </article>
 
     `;
-
 }
 
 
@@ -4217,26 +2767,18 @@ async function editCertificate(
 ) {
 
     if (!checkAdmin()) {
-
         return;
-
     }
 
 
     if (!certificateId) {
-
-        alert(
-            "معرف الشهادة غير موجود."
-        );
-
         return;
-
     }
 
 
     try {
 
-        const certificateReference =
+        const certificateRef =
             doc(
                 db,
                 CERTIFICATES_COLLECTION,
@@ -4244,88 +2786,79 @@ async function editCertificate(
             );
 
 
-        const certificateSnapshot =
+        const snapshot =
             await getDoc(
-                certificateReference
+                certificateRef
             );
 
 
-        if (
-            !certificateSnapshot.exists()
-        ) {
+        if (!snapshot.exists()) {
 
             alert(
-                "لم يتم العثور على الشهادة."
+                "الشهادة غير موجودة."
             );
 
             return;
-
         }
 
 
         const certificate = {
 
             id:
-                certificateSnapshot.id,
+                snapshot.id,
 
-            ...certificateSnapshot.data()
+            ...snapshot.data()
 
         };
 
 
         openModal(
-            "تعديل الشهادة",
+            "Edit Certificate",
             getCertificateFormHTML(
                 certificate
-            )
+            ),
+            "CERTIFICATE"
         );
 
 
-        attachCertificateFormEvents();
-
-
-        const button =
+        const form =
             document.getElementById(
-                "saveCertificateBtn"
+                "certificateForm"
             );
 
 
-        if (button) {
+        if (form) {
 
-            button.disabled =
-                false;
-
-            button.style.pointerEvents =
-                "auto";
-
-            button.style.cursor =
-                "pointer";
-
+            form.addEventListener(
+                "submit",
+                handleCertificateSubmit
+            );
         }
 
 
-        console.log(
-            "CERTIFICATE EDIT FORM OPENED:",
-            certificate
-        );
+        const cancelButton =
+            document.getElementById(
+                "cancelCertificateBtn"
+            );
+
+
+        if (cancelButton) {
+
+            cancelButton.addEventListener(
+                "click",
+                closeModal
+            );
+        }
+
 
     } catch (error) {
 
-        console.error(
-            "EDIT CERTIFICATE ERROR:",
-            error
-        );
-
-
         alert(
-            "حدث خطأ أثناء تحميل الشهادة.\n\n" +
             getFirebaseErrorMessage(
                 error
             )
         );
-
     }
-
 }
 
 
@@ -4338,43 +2871,27 @@ async function deleteCertificate(
 ) {
 
     if (!checkAdmin()) {
-
         return;
-
     }
 
 
     if (!certificateId) {
-
-        alert(
-            "معرف الشهادة غير موجود."
-        );
-
         return;
-
     }
 
 
     const confirmed =
         confirm(
-            "هل أنت متأكد من حذف هذه الشهادة؟\n\nلا يمكن التراجع عن هذه العملية."
+            "هل أنت متأكد أنك تريد حذف هذه الشهادة؟"
         );
 
 
     if (!confirmed) {
-
         return;
-
     }
 
 
     try {
-
-        console.log(
-            "DELETING CERTIFICATE:",
-            certificateId
-        );
-
 
         await deleteDoc(
             doc(
@@ -4385,122 +2902,225 @@ async function deleteCertificate(
         );
 
 
-        console.log(
-            "CERTIFICATE DELETE SUCCESS"
-        );
-
-
         alert(
-            "تم حذف الشهادة بنجاح."
+            "تم حذف الشهادة بنجاح ✅"
         );
 
 
         await loadCertificates();
-
 
         await updateDashboardStats();
 
 
     } catch (error) {
 
-        console.error(
-            "DELETE CERTIFICATE ERROR:",
-            error
-        );
-
-
         alert(
-            "فشل حذف الشهادة.\n\n" +
             getFirebaseErrorMessage(
                 error
             )
         );
-
     }
-
 }
+
+
+/* =========================================================
+   CERTIFICATE CARD ACTIONS
+   ========================================================= */
+
+document.addEventListener(
+    "click",
+    async event => {
+
+        const editButton =
+            event.target.closest(
+                ".edit-certificate-btn"
+            );
+
+
+        if (editButton) {
+
+            await editCertificate(
+                editButton.dataset.id
+            );
+
+            return;
+        }
+
+
+        const deleteButton =
+            event.target.closest(
+                ".delete-certificate-btn"
+            );
+
+
+        if (deleteButton) {
+
+            await deleteCertificate(
+                deleteButton.dataset.id
+            );
+
+            return;
+        }
+    }
+);
 
 
 /* =========================================================
    COURSES
    ========================================================= */
 
-function showCoursesPlaceholder() {
+async function openAddCourseModal() {
 
-    if (!coursesContainer) {
-
+    if (!checkAdmin()) {
         return;
-
     }
 
 
-    coursesContainer.innerHTML = `
-
-        <div class="empty-state">
-
-            <div class="empty-icon">
-                📚
-            </div>
-
-            <h3>
-                قسم الكورسات
-            </h3>
-
-            <p>
-                قسم الكورسات جاهز في لوحة التحكم،
-                وسيتم ربطه بـ Firestore لاحقًا.
-            </p>
-
-            <button
-                class="primary-button"
-                data-action="add-course"
-                type="button"
-            >
-                + إضافة كورس
-            </button>
-
-        </div>
-
-    `;
-
-}
-
-
-function openCourseComingSoon() {
-
     openModal(
-        "إضافة كورس",
+        "Add Course",
         `
 
-            <div class="empty-state">
+            <form
+                class="admin-form"
+                id="courseForm"
+                novalidate
+            >
 
-                <div class="empty-icon">
-                    📚
+                <div class="form-group">
+
+                    <label for="courseTitle">
+                        Course Title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="courseTitle"
+                        placeholder="مثال: Advanced GIS"
+                    >
+
                 </div>
 
-                <h3>
-                    إدارة الكورسات
-                </h3>
 
-                <p>
-                    إدارة الكورسات سيتم ربطها بـ Firestore في الخطوة التالية.
-                </p>
+                <div class="form-group">
 
-            </div>
+                    <label for="courseCategory">
+                        Category
+                    </label>
 
-        `
+                    <select id="courseCategory">
+
+                        <option value="gis">
+                            GIS
+                        </option>
+
+                        <option value="surveying">
+                            Surveying
+                        </option>
+
+                        <option value="remote-sensing">
+                            Remote Sensing
+                        </option>
+
+                        <option value="programming">
+                            Programming
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="courseDescription">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="courseDescription"
+                        placeholder="وصف الكورس..."
+                    ></textarea>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="courseLink">
+                        Course Link
+                    </label>
+
+                    <input
+                        type="text"
+                        id="courseLink"
+                        placeholder="https://..."
+                    >
+
+                </div>
+
+
+                <div class="form-actions">
+
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        id="cancelCourseBtn"
+                    >
+                        إلغاء
+                    </button>
+
+
+                    <button
+                        type="submit"
+                        class="btn-primary"
+                    >
+                        إضافة الكورس
+                    </button>
+
+                </div>
+
+            </form>
+
+        `,
+        "COURSE"
     );
 
-}
+
+    const form =
+        document.getElementById(
+            "courseForm"
+        );
 
 
-if (addCourseButton) {
+    if (!form) {
+        return;
+    }
 
-    addCourseButton.addEventListener(
-        "click",
-        openCourseComingSoon
+
+    form.addEventListener(
+        "submit",
+        event => {
+
+            event.preventDefault();
+
+            alert(
+                "قسم الكورسات يحتاج Collection مستقل في Firestore. تم تجهيز الواجهة."
+            );
+
+            closeModal();
+
+        }
     );
 
+
+    document
+        .getElementById(
+            "cancelCourseBtn"
+        )
+        ?.addEventListener(
+            "click",
+            closeModal
+        );
 }
 
 
@@ -4508,120 +3128,151 @@ if (addCourseButton) {
    SKILLS
    ========================================================= */
 
-function showSkillsPlaceholder() {
+async function openAddSkillModal() {
 
-    if (!skillsContainer) {
-
+    if (!checkAdmin()) {
         return;
-
     }
 
 
-    skillsContainer.innerHTML = `
-
-        <div class="empty-state">
-
-            <div class="empty-icon">
-                💡
-            </div>
-
-            <h3>
-                Skills Management
-            </h3>
-
-            <p>
-                إدارة المهارات سيتم ربطها بـ Firestore لاحقًا.
-            </p>
-
-            <button
-                class="primary-button"
-                data-action="add-skill"
-                type="button"
-            >
-                + إضافة مهارة
-            </button>
-
-        </div>
-
-    `;
-
-}
-
-
-function openSkillComingSoon() {
-
     openModal(
-        "إضافة مهارة",
+        "Add Skill",
         `
 
-            <div class="empty-state">
+            <form
+                class="admin-form"
+                id="skillForm"
+                novalidate
+            >
 
-                <div class="empty-icon">
-                    💡
+                <div class="form-group">
+
+                    <label for="skillName">
+                        Skill Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="skillName"
+                        placeholder="مثال: ArcGIS Pro"
+                    >
+
                 </div>
 
-                <h3>
-                    إدارة المهارات
-                </h3>
 
-                <p>
-                    إدارة المهارات سيتم ربطها بـ Firestore في الخطوة التالية.
-                </p>
+                <div class="form-group">
 
-            </div>
+                    <label for="skillDescription">
+                        Description
+                    </label>
 
-        `
+                    <textarea
+                        id="skillDescription"
+                        placeholder="وصف المهارة..."
+                    ></textarea>
+
+                </div>
+
+
+                <div class="form-actions">
+
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        id="cancelSkillBtn"
+                    >
+                        إلغاء
+                    </button>
+
+
+                    <button
+                        type="submit"
+                        class="btn-primary"
+                    >
+                        إضافة المهارة
+                    </button>
+
+                </div>
+
+            </form>
+
+        `,
+        "SKILL"
     );
 
-}
+
+    const form =
+        document.getElementById(
+            "skillForm"
+        );
 
 
-if (addSkillButton) {
+    if (!form) {
+        return;
+    }
 
-    addSkillButton.addEventListener(
-        "click",
-        openSkillComingSoon
+
+    form.addEventListener(
+        "submit",
+        event => {
+
+            event.preventDefault();
+
+            alert(
+                "قسم المهارات يحتاج Collection مستقل في Firestore. تم تجهيز الواجهة."
+            );
+
+            closeModal();
+
+        }
     );
 
+
+    document
+        .getElementById(
+            "cancelSkillBtn"
+        )
+        ?.addEventListener(
+            "click",
+            closeModal
+        );
 }
 
 
 /* =========================================================
-   DASHBOARD STATS
+   DASHBOARD STATISTICS
    ========================================================= */
 
 async function updateDashboardStats() {
 
-    console.log(
-        "UPDATING DASHBOARD STATS"
-    );
-
-
     try {
 
-        const projectsSnapshot =
-            await getDocs(
+        const [
+            projectsSnapshot,
+            certificatesSnapshot
+        ] = await Promise.all([
+
+            getDocs(
                 collection(
                     db,
                     PROJECTS_COLLECTION
                 )
-            );
+            ),
 
-
-        const certificatesSnapshot =
-            await getDocs(
+            getDocs(
                 collection(
                     db,
                     CERTIFICATES_COLLECTION
                 )
-            );
+            )
+
+        ]);
 
 
         if (projectsCount) {
 
             projectsCount.textContent =
                 projectsSnapshot.size;
-
         }
 
 
@@ -4629,7 +3280,6 @@ async function updateDashboardStats() {
 
             certificatesCount.textContent =
                 certificatesSnapshot.size;
-
         }
 
 
@@ -4637,7 +3287,6 @@ async function updateDashboardStats() {
 
             coursesCount.textContent =
                 "0";
-
         }
 
 
@@ -4645,30 +3294,143 @@ async function updateDashboardStats() {
 
             skillsCount.textContent =
                 "0";
-
         }
 
 
-        console.log(
-            "Dashboard stats updated:",
-            {
-                projects:
-                    projectsSnapshot.size,
+    } catch (error) {
 
-                certificates:
-                    certificatesSnapshot.size
-            }
+        console.error(
+            "Dashboard stats error:",
+            error
+        );
+    }
+}
+
+
+/* =========================================================
+   FIREBASE CONNECTION TEST
+   ========================================================= */
+
+async function testFirebaseConnection() {
+
+    try {
+
+        await Promise.all([
+
+            getDocs(
+                collection(
+                    db,
+                    PROJECTS_COLLECTION
+                )
+            ),
+
+            getDocs(
+                collection(
+                    db,
+                    CERTIFICATES_COLLECTION
+                )
+            )
+
+        ]);
+
+
+        console.log(
+            "Firebase connection: OK"
         );
 
 
     } catch (error) {
 
         console.error(
-            "DASHBOARD STATS ERROR:",
+            "Firebase connection failed:",
             error
         );
-
     }
+}
+
+
+/* =========================================================
+   WEBSITE BUTTONS
+   ========================================================= */
+
+function openWebsite() {
+
+    window.location.href =
+        "index.html";
+}
+
+
+if (viewWebsiteButton) {
+
+    viewWebsiteButton.addEventListener(
+        "click",
+        openWebsite
+    );
+}
+
+
+if (headerWebsiteButton) {
+
+    headerWebsiteButton.addEventListener(
+        "click",
+        openWebsite
+    );
+}
+
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+if (logoutButton) {
+
+    logoutButton.addEventListener(
+        "click",
+        async () => {
+
+            const confirmed =
+                confirm(
+                    "هل تريد تسجيل الخروج؟"
+                );
+
+
+            if (!confirmed) {
+                return;
+            }
+
+
+            try {
+
+                await signOut(
+                    auth
+                );
+
+                window.location.href =
+                    "login.html";
+
+
+            } catch (error) {
+
+                alert(
+                    getFirebaseErrorMessage(
+                        error
+                    )
+                );
+            }
+
+        }
+    );
+}
+
+
+/* =========================================================
+   CURRENT YEAR
+   ========================================================= */
+
+if (currentYear) {
+
+    currentYear.textContent =
+        new Date().getFullYear();
 
 }
 
@@ -4679,58 +3441,23 @@ async function updateDashboardStats() {
 
 onAuthStateChanged(
     auth,
-    async (user) => {
-
-        console.log(
-            "========================================"
-        );
-
-        console.log(
-            "AUTH STATE CHANGED"
-        );
-
-        console.log(
-            "USER:",
-            user
-        );
-
+    async user => {
 
         if (!user) {
-
-            console.warn(
-                "NO FIREBASE USER"
-            );
-
 
             window.location.href =
                 "login.html";
 
-
             return;
-
         }
 
 
-        console.log(
-            "Logged user UID:",
-            user.uid
-        );
-
-
-        console.log(
-            "Expected admin UID:",
-            ADMIN_UID
-        );
-
-
         if (
-            user.uid !==
-            ADMIN_UID
+            user.uid !== ADMIN_UID
         ) {
 
             alert(
-                "هذا الحساب غير مصرح له بالدخول إلى لوحة الأدمن.\n\nUID الحالي:\n" +
-                user.uid
+                "هذا الحساب غير مصرح له بدخول لوحة الإدارة."
             );
 
 
@@ -4745,16 +3472,13 @@ onAuthStateChanged(
                 console.error(
                     error
                 );
-
             }
 
 
             window.location.href =
                 "login.html";
 
-
             return;
-
         }
 
 
@@ -4763,28 +3487,21 @@ onAuthStateChanged(
 
 
         console.log(
-            "ADMIN AUTHENTICATED SUCCESSFULLY"
+            "Admin authenticated:",
+            user.uid
         );
 
 
         await updateDashboardStats();
 
-
         await loadProjects();
-
 
         await loadCertificates();
 
-
         await testFirebaseConnection();
 
-
-        console.log(
-            "ADMIN DASHBOARD READY"
-        );
-
-        console.log(
-            "========================================"
+        await showSection(
+            "dashboard"
         );
 
     }
@@ -4792,57 +3509,22 @@ onAuthStateChanged(
 
 
 /* =========================================================
-   INITIAL SECTION
+   INITIAL UI
    ========================================================= */
 
-showSection(
-    "dashboard"
-);
+if (modal) {
 
+    modal.classList.remove(
+        "open"
+    );
 
-/* =========================================================
-   READY
-   ========================================================= */
+    modal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+}
+
 
 console.log(
-    "========================================"
-);
-
-console.log(
-    "Samir Portfolio Admin loaded successfully."
-);
-
-console.log(
-    "Admin UID:",
-    ADMIN_UID
-);
-
-console.log(
-    "Firestore Projects:",
-    PROJECTS_COLLECTION
-);
-
-console.log(
-    "Firestore Certificates:",
-    CERTIFICATES_COLLECTION
-);
-
-console.log(
-    "Direct Dynamic Form Events: ENABLED"
-);
-
-console.log(
-    "Delegated Safety Events: ENABLED"
-);
-
-console.log(
-    "Project CRUD: ENABLED"
-);
-
-console.log(
-    "Certificate CRUD: ENABLED"
-);
-
-console.log(
-    "========================================"
+    "Ahmed Samir Portfolio Admin loaded successfully."
 );
