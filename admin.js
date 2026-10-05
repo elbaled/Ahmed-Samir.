@@ -187,6 +187,7 @@ function escapeHTML(value) {
 
     }
 
+
     return String(value)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -280,7 +281,8 @@ function getFirebaseErrorMessage(error) {
     }
 
 
-    return message || "حدث خطأ غير معروف في Firebase.";
+    return message ||
+        "حدث خطأ غير معروف في Firebase.";
 
 }
 
@@ -970,6 +972,7 @@ function getProjectFormHTML(
         <form
             id="projectForm"
             class="admin-form"
+            novalidate
         >
 
             <input
@@ -1209,7 +1212,7 @@ function getProjectFormHTML(
 
 
                 <button
-                    type="submit"
+                    type="button"
                     class="btn-primary"
                     id="saveProjectBtn"
                 >
@@ -1281,20 +1284,47 @@ function attachProjectFormEvents() {
         );
 
 
+    const saveButton =
+        document.getElementById(
+            "saveProjectBtn"
+        );
+
+
+    console.log(
+        "PROJECT FORM:",
+        form
+    );
+
+    console.log(
+        "SAVE PROJECT BUTTON:",
+        saveButton
+    );
+
+
     if (cancel) {
 
         cancel.addEventListener(
             "click",
-            closeModal
+            (event) => {
+
+                event.preventDefault();
+
+                closeModal();
+
+            }
         );
 
     }
 
 
-    if (!form) {
+    if (!saveButton) {
 
         console.error(
-            "Project form was not found."
+            "SAVE PROJECT BUTTON NOT FOUND"
+        );
+
+        alert(
+            "خطأ: زر حفظ المشروع غير موجود."
         );
 
         return;
@@ -1302,17 +1332,65 @@ function attachProjectFormEvents() {
     }
 
 
-    form.addEventListener(
-        "submit",
+    saveButton.addEventListener(
+        "click",
         async (event) => {
 
             event.preventDefault();
 
+
             console.log(
-                "Project form submitted."
+                "================================"
             );
 
-            await saveProject();
+            console.log(
+                "SAVE PROJECT BUTTON CLICKED"
+            );
+
+            console.log(
+                "================================"
+            );
+
+
+            saveButton.disabled = true;
+
+            saveButton.textContent =
+                "جاري الحفظ...";
+
+
+            try {
+
+                await saveProject();
+
+            } catch (error) {
+
+                console.error(
+                    "SAVE PROJECT BUTTON ERROR:",
+                    error
+                );
+
+                alert(
+                    "حدث خطأ أثناء الحفظ:\n\n" +
+                    error.message
+                );
+
+            } finally {
+
+                saveButton.disabled = false;
+
+
+                const projectId =
+                    document.getElementById(
+                        "projectId"
+                    )?.value.trim() || "";
+
+
+                saveButton.textContent =
+                    projectId
+                        ? "حفظ التعديلات"
+                        : "إضافة المشروع";
+
+            }
 
         }
     );
@@ -2198,6 +2276,7 @@ function getCertificateFormHTML(
         <form
             id="certificateForm"
             class="admin-form"
+            novalidate
         >
 
             <input
@@ -2334,7 +2413,7 @@ function getCertificateFormHTML(
 
 
                 <button
-                    type="submit"
+                    type="button"
                     class="btn-primary"
                     id="saveCertificateBtn"
                 >
@@ -2406,20 +2485,47 @@ function attachCertificateFormEvents() {
         );
 
 
+    const saveButton =
+        document.getElementById(
+            "saveCertificateBtn"
+        );
+
+
+    console.log(
+        "CERTIFICATE FORM:",
+        form
+    );
+
+    console.log(
+        "SAVE CERTIFICATE BUTTON:",
+        saveButton
+    );
+
+
     if (cancel) {
 
         cancel.addEventListener(
             "click",
-            closeModal
+            (event) => {
+
+                event.preventDefault();
+
+                closeModal();
+
+            }
         );
 
     }
 
 
-    if (!form) {
+    if (!saveButton) {
 
         console.error(
-            "Certificate form was not found."
+            "SAVE CERTIFICATE BUTTON NOT FOUND"
+        );
+
+        alert(
+            "خطأ: زر حفظ الشهادة غير موجود."
         );
 
         return;
@@ -2427,17 +2533,65 @@ function attachCertificateFormEvents() {
     }
 
 
-    form.addEventListener(
-        "submit",
+    saveButton.addEventListener(
+        "click",
         async (event) => {
 
             event.preventDefault();
 
+
             console.log(
-                "Certificate form submitted."
+                "================================"
             );
 
-            await saveCertificate();
+            console.log(
+                "SAVE CERTIFICATE BUTTON CLICKED"
+            );
+
+            console.log(
+                "================================"
+            );
+
+
+            saveButton.disabled = true;
+
+            saveButton.textContent =
+                "جاري الحفظ...";
+
+
+            try {
+
+                await saveCertificate();
+
+            } catch (error) {
+
+                console.error(
+                    "SAVE CERTIFICATE BUTTON ERROR:",
+                    error
+                );
+
+                alert(
+                    "حدث خطأ أثناء الحفظ:\n\n" +
+                    error.message
+                );
+
+            } finally {
+
+                saveButton.disabled = false;
+
+
+                const certificateId =
+                    document.getElementById(
+                        "certificateId"
+                    )?.value.trim() || "";
+
+
+                saveButton.textContent =
+                    certificateId
+                        ? "حفظ التعديلات"
+                        : "إضافة الشهادة";
+
+            }
 
         }
     );
@@ -2505,6 +2659,20 @@ async function saveCertificate() {
         )?.value.trim() || "";
 
 
+    console.log(
+        "Certificate data:",
+        {
+            id,
+            title,
+            issuer,
+            date,
+            description,
+            imageUrl,
+            certificateUrl
+        }
+    );
+
+
     if (!title) {
 
         alert(
@@ -2559,6 +2727,12 @@ async function saveCertificate() {
             auth.currentUser;
 
 
+        console.log(
+            "Writing certificate with UID:",
+            user?.uid
+        );
+
+
         if (!user) {
 
             throw new Error(
@@ -2582,6 +2756,12 @@ async function saveCertificate() {
 
         if (id) {
 
+            console.log(
+                "Updating certificate:",
+                id
+            );
+
+
             await updateDoc(
                 doc(
                     db,
@@ -2592,11 +2772,21 @@ async function saveCertificate() {
             );
 
 
+            console.log(
+                "Certificate updated successfully."
+            );
+
+
             alert(
                 "تم تعديل الشهادة بنجاح."
             );
 
         } else {
+
+            console.log(
+                "Adding new certificate..."
+            );
+
 
             data.createdAt =
                 serverTimestamp();
@@ -2875,6 +3065,7 @@ function createCertificateCard(
 
 
                 <p>
+
                     <strong>
                         Issuer:
                     </strong>
@@ -2883,6 +3074,7 @@ function createCertificateCard(
                         certificate.issuer ||
                         ""
                     )}
+
                 </p>
 
 
@@ -2890,6 +3082,7 @@ function createCertificateCard(
                     certificate.date
                         ? `
                             <p>
+
                                 <strong>
                                     Date:
                                 </strong>
@@ -2897,6 +3090,7 @@ function createCertificateCard(
                                 ${escapeHTML(
                                     certificate.date
                                 )}
+
                             </p>
                         `
                         : ""
@@ -3169,12 +3363,23 @@ async function deleteCertificate(
 
     try {
 
+        console.log(
+            "Deleting certificate:",
+            certificateId
+        );
+
+
         await deleteDoc(
             doc(
                 db,
                 CERTIFICATES_COLLECTION,
                 certificateId
             )
+        );
+
+
+        console.log(
+            "Certificate deleted successfully."
         );
 
 
