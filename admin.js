@@ -588,8 +588,7 @@ document.addEventListener(
 
     }
 );
-
-
+ 
 /* =========================================================
    QUICK ACTIONS
    ========================================================= */
@@ -598,55 +597,105 @@ document.addEventListener(
     "click",
     async event => {
 
-        const actionButton =
+        const button =
             event.target.closest(
-                "[data-action]"
+                "[data-action], .quick-action"
             );
 
-
-        if (!actionButton) {
-
+        if (!button) {
             return;
-
         }
 
+        event.preventDefault();
 
         const action =
-            actionButton.dataset.action;
+            button.dataset.action;
 
+        const section =
+            button.dataset.section;
+
+
+        /* =====================================================
+           ADD PROJECT
+           ===================================================== */
 
         if (
-            action === "add-project"
+            action === "add-project" ||
+            section === "projects"
         ) {
+
+            if (
+                section === "projects" &&
+                !action
+            ) {
+
+                await showSection(
+                    "projects"
+                );
+
+            }
 
             await openAddProjectModal();
 
             return;
-
         }
 
 
+        /* =====================================================
+           ADD CERTIFICATE
+           ===================================================== */
+
         if (
-            action === "add-certificate"
+            action === "add-certificate" ||
+            section === "certificates"
         ) {
+
+            if (
+                section === "certificates" &&
+                !action
+            ) {
+
+                await showSection(
+                    "certificates"
+                );
+
+            }
 
             await openAddCertificateModal();
 
             return;
-
         }
 
 
+        /* =====================================================
+           ADD COURSE
+           ===================================================== */
+
         if (
-            action === "add-course"
+            action === "add-course" ||
+            section === "courses"
         ) {
+
+            if (
+                section === "courses" &&
+                !action
+            ) {
+
+                await showSection(
+                    "courses"
+                );
+
+            }
 
             await openAddCourseModal();
 
             return;
-
         }
 
+
+        /* =====================================================
+           ADD SKILL
+           ===================================================== */
 
         if (
             action === "add-skill"
@@ -655,103 +704,6 @@ document.addEventListener(
             await openAddSkillModal();
 
             return;
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   QUICK ACTION SECTION BUTTONS
-   ========================================================= */
-
-document.addEventListener(
-    "click",
-    async event => {
-
-        const button =
-            event.target.closest(
-                ".quick-action"
-            );
-
-
-        if (!button) {
-
-            return;
-
-        }
-
-
-        const section =
-            button.dataset.section;
-
-
-        if (
-            section === "projects"
-        ) {
-
-            await showSection(
-                "projects"
-            );
-
-
-            await openAddProjectModal();
-
-
-            return;
-
-        }
-
-
-        if (
-            section === "certificates"
-        ) {
-
-            await showSection(
-                "certificates"
-            );
-
-
-            await openAddCertificateModal();
-
-
-            return;
-
-        }
-
-
-        if (
-            section === "courses"
-        ) {
-
-            await showSection(
-                "courses"
-            );
-
-
-            await openAddCourseModal();
-
-
-            return;
-
-        }
-
-
-        if (
-            section === "skills"
-        ) {
-
-            await showSection(
-                "skills"
-            );
-
-
-            await openAddSkillModal();
-
-
-            return;
-
         }
 
     }
