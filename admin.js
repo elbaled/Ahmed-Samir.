@@ -3,9 +3,23 @@
    FULL FIRESTORE CRUD VERSION
    Projects + Certificates + Authentication
 
+   FULL STABLE VERSION
+   ---------------------------------------------------------
+   Projects:
+   - Add
+   - Edit
+   - Delete
+   - Read
+
+   Certificates:
+   - Add
+   - Edit
+   - Delete
+   - Read
+
    IMPORTANT:
-   Save / Edit buttons use EVENT DELEGATION.
-   This is required because the forms are created dynamically.
+   Dynamic forms are connected directly after creation.
+   Document-level delegation is also kept as a safety layer.
    ========================================================= */
 
 "use strict";
@@ -196,6 +210,7 @@ function escapeHTML(value) {
 
     }
 
+
     return String(value)
 
         .replace(
@@ -332,6 +347,18 @@ function getFirebaseErrorMessage(error) {
 
         return (
             "Firebase غير متاح حاليًا. تحقق من الإنترنت وحاول مرة أخرى."
+        );
+
+    }
+
+
+    if (
+        code ===
+        "network-request-failed"
+    ) {
+
+        return (
+            "حدثت مشكلة في الاتصال بالإنترنت أو Firebase."
         );
 
     }
@@ -877,8 +904,21 @@ document.addEventListener(
     "click",
     (event) => {
 
+        const target =
+            event.target instanceof Element
+                ? event.target
+                : null;
+
+
+        if (!target) {
+
+            return;
+
+        }
+
+
         const button =
-            event.target.closest(
+            target.closest(
                 "[data-action]"
             );
 
@@ -899,6 +939,8 @@ document.addEventListener(
             "add-project"
         ) {
 
+            event.preventDefault();
+
             openAddProjectModal();
 
             return;
@@ -910,6 +952,8 @@ document.addEventListener(
             action ===
             "add-certificate"
         ) {
+
+            event.preventDefault();
 
             openAddCertificateModal();
 
@@ -923,6 +967,8 @@ document.addEventListener(
             "add-course"
         ) {
 
+            event.preventDefault();
+
             openCourseComingSoon();
 
             return;
@@ -934,6 +980,8 @@ document.addEventListener(
             action ===
             "add-skill"
         ) {
+
+            event.preventDefault();
 
             openSkillComingSoon();
 
@@ -948,15 +996,28 @@ document.addEventListener(
 /* =========================================================
    IMPORTANT:
    DYNAMIC SAVE BUTTONS
-   EVENT DELEGATION
+   SAFETY EVENT DELEGATION
    ========================================================= */
 
 document.addEventListener(
     "click",
     async (event) => {
 
+        const target =
+            event.target instanceof Element
+                ? event.target
+                : null;
+
+
+        if (!target) {
+
+            return;
+
+        }
+
+
         const projectSaveButton =
-            event.target.closest(
+            target.closest(
                 "#saveProjectBtn"
             );
 
@@ -973,7 +1034,7 @@ document.addEventListener(
             );
 
             console.log(
-                "PROJECT SAVE BUTTON DETECTED"
+                "PROJECT SAVE BUTTON CLICK DETECTED"
             );
 
             console.log(
@@ -994,69 +1055,9 @@ document.addEventListener(
             }
 
 
-            isSavingProject =
-                true;
-
-
-            projectSaveButton.disabled =
-                true;
-
-
-            projectSaveButton.textContent =
-                "جاري الحفظ...";
-
-
-            try {
-
-                await saveProject();
-
-            } catch (error) {
-
-                console.error(
-                    "PROJECT SAVE EVENT ERROR:",
-                    error
-                );
-
-
-                alert(
-                    "حدث خطأ أثناء حفظ المشروع:\n\n" +
-                    getFirebaseErrorMessage(
-                        error
-                    )
-                );
-
-            } finally {
-
-                isSavingProject =
-                    false;
-
-
-                const currentButton =
-                    document.getElementById(
-                        "saveProjectBtn"
-                    );
-
-
-                if (currentButton) {
-
-                    currentButton.disabled =
-                        false;
-
-
-                    const projectId =
-                        document.getElementById(
-                            "projectId"
-                        )?.value.trim() || "";
-
-
-                    currentButton.textContent =
-                        projectId
-                            ? "حفظ التعديلات"
-                            : "إضافة المشروع";
-
-                }
-
-            }
+            await handleProjectSaveButton(
+                projectSaveButton
+            );
 
 
             return;
@@ -1065,7 +1066,7 @@ document.addEventListener(
 
 
         const certificateSaveButton =
-            event.target.closest(
+            target.closest(
                 "#saveCertificateBtn"
             );
 
@@ -1082,7 +1083,7 @@ document.addEventListener(
             );
 
             console.log(
-                "CERTIFICATE SAVE BUTTON DETECTED"
+                "CERTIFICATE SAVE BUTTON CLICK DETECTED"
             );
 
             console.log(
@@ -1103,67 +1104,316 @@ document.addEventListener(
             }
 
 
-            isSavingCertificate =
-                true;
+            await handleCertificateSaveButton(
+                certificateSaveButton
+            );
 
 
-            certificateSaveButton.disabled =
-                true;
+            return;
+
+        }
+
+    }
+);
 
 
-            certificateSaveButton.textContent =
-                "جاري الحفظ...";
+/* =========================================================
+   PROJECT SAVE BUTTON HANDLER
+   ========================================================= */
+
+async function handleProjectSaveButton(
+    button
+) {
+
+    if (!button) {
+
+        return;
+
+    }
 
 
-            try {
+    if (
+        isSavingProject
+    ) {
 
-                await saveCertificate();
+        return;
 
-            } catch (error) {
+    }
 
-                console.error(
-                    "CERTIFICATE SAVE EVENT ERROR:",
-                    error
+
+    isSavingProject =
+        true;
+
+
+    const originalText =
+        button.textContent;
+
+
+    button.disabled =
+        true;
+
+
+    button.setAttribute(
+        "aria-disabled",
+        "true"
+    );
+
+
+    button.classList.add(
+        "is-loading"
+    );
+
+
+    button.textContent =
+        "جاري الحفظ...";
+
+
+    try {
+
+        await saveProject();
+
+    } catch (error) {
+
+        console.error(
+            "PROJECT SAVE HANDLER ERROR:",
+            error
+        );
+
+
+        alert(
+            "حدث خطأ أثناء حفظ المشروع:\n\n" +
+            getFirebaseErrorMessage(
+                error
+            )
+        );
+
+    } finally {
+
+        isSavingProject =
+            false;
+
+
+        const currentButton =
+            document.getElementById(
+                "saveProjectBtn"
+            );
+
+
+        if (currentButton) {
+
+            currentButton.disabled =
+                false;
+
+
+            currentButton.removeAttribute(
+                "aria-disabled"
+            );
+
+
+            currentButton.classList.remove(
+                "is-loading"
+            );
+
+
+            const projectId =
+                document.getElementById(
+                    "projectId"
+                )?.value.trim() || "";
+
+
+            currentButton.textContent =
+                projectId
+                    ? "حفظ التعديلات"
+                    : "إضافة المشروع";
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   CERTIFICATE SAVE BUTTON HANDLER
+   ========================================================= */
+
+async function handleCertificateSaveButton(
+    button
+) {
+
+    if (!button) {
+
+        return;
+
+    }
+
+
+    if (
+        isSavingCertificate
+    ) {
+
+        return;
+
+    }
+
+
+    isSavingCertificate =
+        true;
+
+
+    button.disabled =
+        true;
+
+
+    button.setAttribute(
+        "aria-disabled",
+        "true"
+    );
+
+
+    button.classList.add(
+        "is-loading"
+    );
+
+
+    button.textContent =
+        "جاري الحفظ...";
+
+
+    try {
+
+        await saveCertificate();
+
+    } catch (error) {
+
+        console.error(
+            "CERTIFICATE SAVE HANDLER ERROR:",
+            error
+        );
+
+
+        alert(
+            "حدث خطأ أثناء حفظ الشهادة:\n\n" +
+            getFirebaseErrorMessage(
+                error
+            )
+        );
+
+    } finally {
+
+        isSavingCertificate =
+            false;
+
+
+        const currentButton =
+            document.getElementById(
+                "saveCertificateBtn"
+            );
+
+
+        if (currentButton) {
+
+            currentButton.disabled =
+                false;
+
+
+            currentButton.removeAttribute(
+                "aria-disabled"
+            );
+
+
+            currentButton.classList.remove(
+                "is-loading"
+            );
+
+
+            const certificateId =
+                document.getElementById(
+                    "certificateId"
+                )?.value.trim() || "";
+
+
+            currentButton.textContent =
+                certificateId
+                    ? "حفظ التعديلات"
+                    : "إضافة الشهادة";
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   FORM SUBMIT SAFETY
+   ========================================================= */
+
+document.addEventListener(
+    "submit",
+    async (event) => {
+
+        const form =
+            event.target;
+
+
+        if (
+            form?.id ===
+            "projectForm"
+        ) {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+
+            const button =
+                document.getElementById(
+                    "saveProjectBtn"
                 );
 
 
-                alert(
-                    "حدث خطأ أثناء حفظ الشهادة:\n\n" +
-                    getFirebaseErrorMessage(
-                        error
-                    )
+            if (
+                button &&
+                !isSavingProject
+            ) {
+
+                await handleProjectSaveButton(
+                    button
                 );
 
-            } finally {
-
-                isSavingCertificate =
-                    false;
+            }
 
 
-                const currentButton =
-                    document.getElementById(
-                        "saveCertificateBtn"
-                    );
+            return;
+
+        }
 
 
-                if (currentButton) {
+        if (
+            form?.id ===
+            "certificateForm"
+        ) {
 
-                    currentButton.disabled =
-                        false;
+            event.preventDefault();
 
-
-                    const certificateId =
-                        document.getElementById(
-                            "certificateId"
-                        )?.value.trim() || "";
+            event.stopPropagation();
 
 
-                    currentButton.textContent =
-                        certificateId
-                            ? "حفظ التعديلات"
-                            : "إضافة الشهادة";
+            const button =
+                document.getElementById(
+                    "saveCertificateBtn"
+                );
 
-                }
+
+            if (
+                button &&
+                !isSavingCertificate
+            ) {
+
+                await handleCertificateSaveButton(
+                    button
+                );
 
             }
 
@@ -1184,8 +1434,21 @@ document.addEventListener(
     "click",
     (event) => {
 
+        const target =
+            event.target instanceof Element
+                ? event.target
+                : null;
+
+
+        if (!target) {
+
+            return;
+
+        }
+
+
         const projectCancelButton =
-            event.target.closest(
+            target.closest(
                 "#cancelProjectBtn"
             );
 
@@ -1204,7 +1467,7 @@ document.addEventListener(
 
 
         const certificateCancelButton =
-            event.target.closest(
+            target.closest(
                 "#cancelCertificateBtn"
             );
 
@@ -1233,8 +1496,21 @@ document.addEventListener(
     "click",
     (event) => {
 
+        const target =
+            event.target instanceof Element
+                ? event.target
+                : null;
+
+
+        if (!target) {
+
+            return;
+
+        }
+
+
         const editButton =
-            event.target.closest(
+            target.closest(
                 ".edit-project-btn"
             );
 
@@ -1253,7 +1529,7 @@ document.addEventListener(
 
 
         const deleteButton =
-            event.target.closest(
+            target.closest(
                 ".delete-project-btn"
             );
 
@@ -1282,8 +1558,21 @@ document.addEventListener(
     "click",
     (event) => {
 
+        const target =
+            event.target instanceof Element
+                ? event.target
+                : null;
+
+
+        if (!target) {
+
+            return;
+
+        }
+
+
         const editButton =
-            event.target.closest(
+            target.closest(
                 ".edit-certificate-btn"
             );
 
@@ -1302,7 +1591,7 @@ document.addEventListener(
 
 
         const deleteButton =
-            event.target.closest(
+            target.closest(
                 ".delete-certificate-btn"
             );
 
@@ -1425,9 +1714,11 @@ function openModal(
             "MODAL ELEMENT NOT FOUND"
         );
 
+
         alert(
             "خطأ: نافذة الإضافة غير موجودة في admin.html."
         );
+
 
         return;
 
@@ -1474,6 +1765,10 @@ function openModal(
 }
 
 
+/* =========================================================
+   CLOSE MODAL
+   ========================================================= */
+
 function closeModal() {
 
     if (!modal) {
@@ -1497,6 +1792,14 @@ function closeModal() {
     document.body.classList.remove(
         "modal-open"
     );
+
+
+    isSavingProject =
+        false;
+
+
+    isSavingCertificate =
+        false;
 
 }
 
@@ -1584,7 +1887,6 @@ function getProjectFormHTML(
             id="projectForm"
             class="admin-form"
             novalidate
-            onsubmit="return false;"
         >
 
             <input
@@ -1824,7 +2126,7 @@ function getProjectFormHTML(
 
 
                 <button
-                    type="button"
+                    type="submit"
                     class="btn-primary"
                     id="saveProjectBtn"
                 >
@@ -1840,6 +2142,154 @@ function getProjectFormHTML(
         </form>
 
     `;
+
+}
+
+
+/* =========================================================
+   CONNECT PROJECT FORM DIRECTLY
+   ========================================================= */
+
+function attachProjectFormEvents() {
+
+    const form =
+        document.getElementById(
+            "projectForm"
+        );
+
+
+    const saveButton =
+        document.getElementById(
+            "saveProjectBtn"
+        );
+
+
+    const cancelButton =
+        document.getElementById(
+            "cancelProjectBtn"
+        );
+
+
+    console.log(
+        "========================================"
+    );
+
+    console.log(
+        "ATTACH PROJECT FORM EVENTS"
+    );
+
+    console.log(
+        "Project form:",
+        !!form
+    );
+
+    console.log(
+        "Project save button:",
+        !!saveButton
+    );
+
+    console.log(
+        "Project cancel button:",
+        !!cancelButton
+    );
+
+    console.log(
+        "========================================"
+    );
+
+
+    if (form) {
+
+        form.addEventListener(
+            "submit",
+            async (event) => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+
+                if (
+                    isSavingProject
+                ) {
+
+                    return;
+
+                }
+
+
+                if (!saveButton) {
+
+                    alert(
+                        "خطأ: زر حفظ المشروع غير موجود."
+                    );
+
+                    return;
+
+                }
+
+
+                await handleProjectSaveButton(
+                    saveButton
+                );
+
+            }
+        );
+
+    }
+
+
+    if (saveButton) {
+
+        saveButton.addEventListener(
+            "click",
+            async (event) => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+
+                console.log(
+                    "DIRECT PROJECT SAVE CLICK"
+                );
+
+
+                if (
+                    isSavingProject
+                ) {
+
+                    return;
+
+                }
+
+
+                await handleProjectSaveButton(
+                    saveButton
+                );
+
+            }
+        );
+
+    }
+
+
+    if (cancelButton) {
+
+        cancelButton.addEventListener(
+            "click",
+            (event) => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+                closeModal();
+
+            }
+        );
+
+    }
 
 }
 
@@ -1868,6 +2318,15 @@ function openAddProjectModal() {
     );
 
 
+    attachProjectFormEvents();
+
+
+    const button =
+        document.getElementById(
+            "saveProjectBtn"
+        );
+
+
     console.log(
         "PROJECT FORM CREATED"
     );
@@ -1875,45 +2334,41 @@ function openAddProjectModal() {
 
     console.log(
         "SAVE BUTTON EXISTS:",
-        !!document.getElementById(
-            "saveProjectBtn"
-        )
+        !!button
     );
 
-}
 
+    if (button) {
 
-if (addProjectButton) {
+        button.disabled =
+            false;
 
-    addProjectButton.addEventListener(
-        "click",
-        openAddProjectModal
-    );
+        button.style.pointerEvents =
+            "auto";
+
+        button.style.cursor =
+            "pointer";
+
+    }
 
 }
 
 
 /* =========================================================
-   PROJECT FORM EVENTS
+   ADD PROJECT BUTTON
    ========================================================= */
 
-function attachProjectFormEvents() {
+if (addProjectButton) {
 
-    /*
-       IMPORTANT:
+    addProjectButton.addEventListener(
+        "click",
+        (event) => {
 
-       We intentionally do NOT attach a click listener
-       to the dynamic save button here.
+            event.preventDefault();
 
-       The global document click listener above
-       handles #saveProjectBtn.
+            openAddProjectModal();
 
-       This prevents duplicate listeners.
-    */
-
-
-    console.log(
-        "Project form ready for delegated events."
+        }
     );
 
 }
@@ -2626,6 +3081,29 @@ async function editProject(
         );
 
 
+        attachProjectFormEvents();
+
+
+        const button =
+            document.getElementById(
+                "saveProjectBtn"
+            );
+
+
+        if (button) {
+
+            button.disabled =
+                false;
+
+            button.style.pointerEvents =
+                "auto";
+
+            button.style.cursor =
+                "pointer";
+
+        }
+
+
         console.log(
             "PROJECT EDIT FORM OPENED:",
             project
@@ -2761,7 +3239,6 @@ function getCertificateFormHTML(
             id="certificateForm"
             class="admin-form"
             novalidate
-            onsubmit="return false;"
         >
 
             <input
@@ -2898,7 +3375,7 @@ function getCertificateFormHTML(
 
 
                 <button
-                    type="button"
+                    type="submit"
                     class="btn-primary"
                     id="saveCertificateBtn"
                 >
@@ -2914,6 +3391,154 @@ function getCertificateFormHTML(
         </form>
 
     `;
+
+}
+
+
+/* =========================================================
+   CONNECT CERTIFICATE FORM DIRECTLY
+   ========================================================= */
+
+function attachCertificateFormEvents() {
+
+    const form =
+        document.getElementById(
+            "certificateForm"
+        );
+
+
+    const saveButton =
+        document.getElementById(
+            "saveCertificateBtn"
+        );
+
+
+    const cancelButton =
+        document.getElementById(
+            "cancelCertificateBtn"
+        );
+
+
+    console.log(
+        "========================================"
+    );
+
+    console.log(
+        "ATTACH CERTIFICATE FORM EVENTS"
+    );
+
+    console.log(
+        "Certificate form:",
+        !!form
+    );
+
+    console.log(
+        "Certificate save button:",
+        !!saveButton
+    );
+
+    console.log(
+        "Certificate cancel button:",
+        !!cancelButton
+    );
+
+    console.log(
+        "========================================"
+    );
+
+
+    if (form) {
+
+        form.addEventListener(
+            "submit",
+            async (event) => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+
+                if (
+                    isSavingCertificate
+                ) {
+
+                    return;
+
+                }
+
+
+                if (!saveButton) {
+
+                    alert(
+                        "خطأ: زر حفظ الشهادة غير موجود."
+                    );
+
+                    return;
+
+                }
+
+
+                await handleCertificateSaveButton(
+                    saveButton
+                );
+
+            }
+        );
+
+    }
+
+
+    if (saveButton) {
+
+        saveButton.addEventListener(
+            "click",
+            async (event) => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+
+                console.log(
+                    "DIRECT CERTIFICATE SAVE CLICK"
+                );
+
+
+                if (
+                    isSavingCertificate
+                ) {
+
+                    return;
+
+                }
+
+
+                await handleCertificateSaveButton(
+                    saveButton
+                );
+
+            }
+        );
+
+    }
+
+
+    if (cancelButton) {
+
+        cancelButton.addEventListener(
+            "click",
+            (event) => {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+                closeModal();
+
+            }
+        );
+
+    }
 
 }
 
@@ -2942,6 +3567,15 @@ function openAddCertificateModal() {
     );
 
 
+    attachCertificateFormEvents();
+
+
+    const button =
+        document.getElementById(
+            "saveCertificateBtn"
+        );
+
+
     console.log(
         "CERTIFICATE FORM CREATED"
     );
@@ -2949,38 +3583,41 @@ function openAddCertificateModal() {
 
     console.log(
         "SAVE CERTIFICATE BUTTON EXISTS:",
-        !!document.getElementById(
-            "saveCertificateBtn"
-        )
+        !!button
     );
 
-}
 
+    if (button) {
 
-if (addCertificateButton) {
+        button.disabled =
+            false;
 
-    addCertificateButton.addEventListener(
-        "click",
-        openAddCertificateModal
-    );
+        button.style.pointerEvents =
+            "auto";
+
+        button.style.cursor =
+            "pointer";
+
+    }
 
 }
 
 
 /* =========================================================
-   CERTIFICATE FORM EVENTS
+   ADD CERTIFICATE BUTTON
    ========================================================= */
 
-function attachCertificateFormEvents() {
+if (addCertificateButton) {
 
-    /*
-       Dynamic buttons are handled by
-       the global document click listener.
-    */
+    addCertificateButton.addEventListener(
+        "click",
+        (event) => {
 
+            event.preventDefault();
 
-    console.log(
-        "Certificate form ready for delegated events."
+            openAddCertificateModal();
+
+        }
     );
 
 }
@@ -3101,6 +3738,12 @@ async function saveCertificate() {
     }
 
 
+    console.log(
+        "CURRENT USER UID:",
+        user.uid
+    );
+
+
     if (
         user.uid !==
         ADMIN_UID
@@ -3211,6 +3854,11 @@ async function saveCertificate() {
 
 
         await updateDashboardStats();
+
+
+        console.log(
+            "SAVE CERTIFICATE FINISHED SUCCESSFULLY"
+        );
 
 
     } catch (error) {
@@ -3631,6 +4279,29 @@ async function editCertificate(
                 certificate
             )
         );
+
+
+        attachCertificateFormEvents();
+
+
+        const button =
+            document.getElementById(
+                "saveCertificateBtn"
+            );
+
+
+        if (button) {
+
+            button.disabled =
+                false;
+
+            button.style.pointerEvents =
+                "auto";
+
+            button.style.cursor =
+                "pointer";
+
+        }
 
 
         console.log(
@@ -4157,7 +4828,19 @@ console.log(
 );
 
 console.log(
-    "Delegated Save Events: ENABLED"
+    "Direct Dynamic Form Events: ENABLED"
+);
+
+console.log(
+    "Delegated Safety Events: ENABLED"
+);
+
+console.log(
+    "Project CRUD: ENABLED"
+);
+
+console.log(
+    "Certificate CRUD: ENABLED"
 );
 
 console.log(
