@@ -1,6 +1,7 @@
 /* =========================================================
    SAMIR PORTFOLIO - ADMIN DASHBOARD
    Projects + Certificates + Authentication
+   Fixed to match current admin.html
    ========================================================= */
 
 "use strict";
@@ -43,62 +44,59 @@ const CERTIFICATES_COLLECTION =
 
 
 /* =========================================================
-   DOM
+   DOM ELEMENTS
    ========================================================= */
 
 const sidebar =
     document.getElementById("sidebar");
 
-const menuToggle =
-    document.getElementById("menuToggle");
+const sidebarOverlay =
+    document.getElementById("sidebarOverlay");
 
-const sidebarClose =
-    document.getElementById("sidebarClose");
+const menuButton =
+    document.getElementById("menuButton");
 
 const navItems =
     document.querySelectorAll(".nav-item");
 
 const sections =
-    document.querySelectorAll(".admin-section");
+    document.querySelectorAll(".content-section");
 
-const viewWebsiteBtn =
-    document.getElementById("viewWebsiteBtn");
+const pageTitle =
+    document.getElementById("pageTitle");
 
-const logoutBtn =
-    document.getElementById("logoutBtn");
+const viewWebsiteButton =
+    document.getElementById("viewWebsiteButton");
 
-const addProjectBtn =
-    document.getElementById("addProjectBtn");
+const headerWebsiteButton =
+    document.getElementById("headerWebsiteButton");
 
-const addCertificateBtn =
-    document.getElementById("addCertificateBtn");
+const logoutButton =
+    document.getElementById("logoutButton");
 
-const addCourseBtn =
-    document.getElementById("addCourseBtn");
+const addProjectButton =
+    document.getElementById("addProjectButton");
 
-const addSkillBtn =
-    document.getElementById("addSkillBtn");
+const addCertificateButton =
+    document.getElementById("addCertificateButton");
 
-const modal =
-    document.getElementById("adminModal");
+const addCourseButton =
+    document.getElementById("addCourseButton");
 
-const modalOverlay =
-    document.getElementById("modalOverlay");
-
-const modalClose =
-    document.getElementById("modalClose");
-
-const modalTitle =
-    document.getElementById("modalTitle");
-
-const modalBody =
-    document.getElementById("modalBody");
+const addSkillButton =
+    document.getElementById("addSkillButton");
 
 const projectsContainer =
     document.getElementById("projectsContainer");
 
 const certificatesContainer =
     document.getElementById("certificatesContainer");
+
+const coursesContainer =
+    document.getElementById("coursesContainer");
+
+const skillsContainer =
+    document.getElementById("skillsContainer");
 
 const projectsCount =
     document.getElementById("projectsCount");
@@ -114,6 +112,45 @@ const skillsCount =
 
 const currentYear =
     document.getElementById("currentYear");
+
+const modal =
+    document.getElementById("modal");
+
+const modalBackdrop =
+    document.getElementById("modalBackdrop");
+
+const modalClose =
+    document.getElementById("modalClose");
+
+const modalTitle =
+    document.getElementById("modalTitle");
+
+const modalBody =
+    document.getElementById("modalBody");
+
+
+/* =========================================================
+   PAGE TITLES
+   ========================================================= */
+
+const SECTION_TITLES = {
+
+    dashboard:
+        "Dashboard",
+
+    projects:
+        "Projects",
+
+    certificates:
+        "Certificates",
+
+    courses:
+        "Courses",
+
+    skills:
+        "Skills"
+
+};
 
 
 /* =========================================================
@@ -155,61 +192,78 @@ function escapeHTML(value) {
    MOBILE SIDEBAR
    ========================================================= */
 
-if (menuToggle) {
+function openSidebar() {
 
-    menuToggle.addEventListener(
-        "click",
-        () => {
+    if (sidebar) {
 
-            sidebar?.classList.add(
-                "active"
-            );
-
-        }
-    );
-
-}
-
-
-if (sidebarClose) {
-
-    sidebarClose.addEventListener(
-        "click",
-        () => {
-
-            sidebar?.classList.remove(
-                "active"
-            );
-
-        }
-    );
-
-}
-
-
-navItems.forEach(
-    (item) => {
-
-        item.addEventListener(
-            "click",
-            () => {
-
-                sidebar?.classList.remove(
-                    "active"
-                );
-
-            }
+        sidebar.classList.add(
+            "active"
         );
 
     }
-);
+
+    if (sidebarOverlay) {
+
+        sidebarOverlay.classList.add(
+            "active"
+        );
+
+    }
+
+}
+
+
+function closeSidebar() {
+
+    if (sidebar) {
+
+        sidebar.classList.remove(
+            "active"
+        );
+
+    }
+
+    if (sidebarOverlay) {
+
+        sidebarOverlay.classList.remove(
+            "active"
+        );
+
+    }
+
+}
+
+
+if (menuButton) {
+
+    menuButton.addEventListener(
+        "click",
+        openSidebar
+    );
+
+}
+
+
+if (sidebarOverlay) {
+
+    sidebarOverlay.addEventListener(
+        "click",
+        closeSidebar
+    );
+
+}
 
 
 /* =========================================================
    SECTION NAVIGATION
    ========================================================= */
 
-function showSection(sectionId) {
+function showSection(sectionName) {
+
+    if (!sectionName) {
+        return;
+    }
+
 
     sections.forEach(
         (section) => {
@@ -233,15 +287,15 @@ function showSection(sectionId) {
     );
 
 
-    const target =
+    const targetSection =
         document.getElementById(
-            sectionId
+            `${sectionName}Section`
         );
 
 
-    if (target) {
+    if (targetSection) {
 
-        target.classList.add(
+        targetSection.classList.add(
             "active"
         );
 
@@ -250,7 +304,7 @@ function showSection(sectionId) {
 
     const activeNav =
         document.querySelector(
-            `.nav-item[data-section="${sectionId}"]`
+            `.nav-item[data-section="${sectionName}"]`
         );
 
 
@@ -263,9 +317,27 @@ function showSection(sectionId) {
     }
 
 
+    if (pageTitle) {
+
+        pageTitle.textContent =
+            SECTION_TITLES[
+                sectionName
+            ] ||
+            "Dashboard";
+
+    }
+
+
+    closeSidebar();
+
+
+    /* -----------------------------------------
+       Load section data
+       ----------------------------------------- */
+
     if (
-        sectionId ===
-        "projectsSection"
+        sectionName ===
+        "projects"
     ) {
 
         loadProjects();
@@ -274,16 +346,40 @@ function showSection(sectionId) {
 
 
     if (
-        sectionId ===
-        "certificatesSection"
+        sectionName ===
+        "certificates"
     ) {
 
         loadCertificates();
 
     }
 
+
+    if (
+        sectionName ===
+        "courses"
+    ) {
+
+        showCoursesPlaceholder();
+
+    }
+
+
+    if (
+        sectionName ===
+        "skills"
+    ) {
+
+        showSkillsPlaceholder();
+
+    }
+
 }
 
+
+/* =========================================================
+   NAVIGATION EVENTS
+   ========================================================= */
 
 navItems.forEach(
     (item) => {
@@ -292,13 +388,13 @@ navItems.forEach(
             "click",
             () => {
 
-                const sectionId =
+                const sectionName =
                     item.dataset.section;
 
-                if (sectionId) {
+                if (sectionName) {
 
                     showSection(
-                        sectionId
+                        sectionName
                     );
 
                 }
@@ -311,19 +407,183 @@ navItems.forEach(
 
 
 /* =========================================================
+   QUICK ACTION EVENTS
+   ========================================================= */
+
+document
+    .querySelectorAll(
+        ".quick-action"
+    )
+    .forEach(
+        (button) => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const sectionName =
+                        button.dataset.section;
+
+                    if (!sectionName) {
+                        return;
+                    }
+
+
+                    showSection(
+                        sectionName
+                    );
+
+
+                    if (
+                        sectionName ===
+                        "projects"
+                    ) {
+
+                        setTimeout(
+                            () => {
+
+                                openAddProjectModal();
+
+                            },
+                            100
+                        );
+
+                    }
+
+
+                    if (
+                        sectionName ===
+                        "certificates"
+                    ) {
+
+                        setTimeout(
+                            () => {
+
+                                openAddCertificateModal();
+
+                            },
+                            100
+                        );
+
+                    }
+
+
+                    if (
+                        sectionName ===
+                        "courses"
+                    ) {
+
+                        setTimeout(
+                            () => {
+
+                                openCourseComingSoon();
+
+                            },
+                            100
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   EMPTY STATE ACTION BUTTONS
+   ========================================================= */
+
+document.addEventListener(
+    "click",
+    (event) => {
+
+        const button =
+            event.target.closest(
+                "[data-action]"
+            );
+
+
+        if (!button) {
+            return;
+        }
+
+
+        const action =
+            button.dataset.action;
+
+
+        if (
+            action ===
+            "add-project"
+        ) {
+
+            openAddProjectModal();
+
+        }
+
+
+        if (
+            action ===
+            "add-certificate"
+        ) {
+
+            openAddCertificateModal();
+
+        }
+
+
+        if (
+            action ===
+            "add-course"
+        ) {
+
+            openCourseComingSoon();
+
+        }
+
+
+        if (
+            action ===
+            "add-skill"
+        ) {
+
+            openSkillComingSoon();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
    VIEW WEBSITE
    ========================================================= */
 
-if (viewWebsiteBtn) {
+function openWebsite() {
 
-    viewWebsiteBtn.addEventListener(
+    window.location.href =
+        "index.html";
+
+}
+
+
+if (viewWebsiteButton) {
+
+    viewWebsiteButton.addEventListener(
         "click",
-        () => {
+        openWebsite
+    );
 
-            window.location.href =
-                "index.html";
+}
 
-        }
+
+if (headerWebsiteButton) {
+
+    headerWebsiteButton.addEventListener(
+        "click",
+        openWebsite
     );
 
 }
@@ -333,18 +593,33 @@ if (viewWebsiteBtn) {
    LOGOUT
    ========================================================= */
 
-if (logoutBtn) {
+if (logoutButton) {
 
-    logoutBtn.addEventListener(
+    logoutButton.addEventListener(
         "click",
         async () => {
 
+            const confirmed =
+                confirm(
+                    "هل تريد تسجيل الخروج؟"
+                );
+
+
+            if (!confirmed) {
+                return;
+            }
+
+
             try {
 
-                await signOut(auth);
+                await signOut(
+                    auth
+                );
+
 
                 window.location.href =
                     "login.html";
+
 
             } catch (error) {
 
@@ -352,6 +627,7 @@ if (logoutBtn) {
                     "Logout error:",
                     error
                 );
+
 
                 alert(
                     "حدث خطأ أثناء تسجيل الخروج."
@@ -400,6 +676,12 @@ function openModal(
     );
 
 
+    modal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+
     document.body.classList.add(
         "modal-open"
     );
@@ -416,6 +698,12 @@ function closeModal() {
 
     modal.classList.remove(
         "active"
+    );
+
+
+    modal.setAttribute(
+        "aria-hidden",
+        "true"
     );
 
 
@@ -436,9 +724,9 @@ if (modalClose) {
 }
 
 
-if (modalOverlay) {
+if (modalBackdrop) {
 
-    modalOverlay.addEventListener(
+    modalBackdrop.addEventListener(
         "click",
         closeModal
     );
@@ -588,6 +876,17 @@ function getProjectFormHTML(
                             Programming
                         </option>
 
+                        <option
+                            value="civil3d"
+                            ${
+                                category === "civil3d"
+                                    ? "selected"
+                                    : ""
+                            }
+                        >
+                            Civil 3D
+                        </option>
+
                     </select>
 
                 </div>
@@ -728,6 +1027,7 @@ function getProjectFormHTML(
                     إلغاء
                 </button>
 
+
                 <button
                     type="submit"
                     class="btn-primary"
@@ -765,9 +1065,9 @@ function openAddProjectModal() {
 }
 
 
-if (addProjectBtn) {
+if (addProjectButton) {
 
-    addProjectBtn.addEventListener(
+    addProjectButton.addEventListener(
         "click",
         openAddProjectModal
     );
@@ -970,8 +1270,10 @@ async function saveProject() {
     } catch (error) {
 
         console.error(
+            "Save project error:",
             error
         );
+
 
         alert(
             "حدث خطأ أثناء حفظ المشروع:\n\n" +
@@ -1028,7 +1330,8 @@ async function loadProjects() {
 
                 projects.push({
 
-                    id: item.id,
+                    id:
+                        item.id,
 
                     ...item.data()
 
@@ -1071,6 +1374,14 @@ async function loadProjects() {
                         ابدأ بإضافة أول مشروع.
                     </p>
 
+                    <button
+                        class="primary-button"
+                        data-action="add-project"
+                        type="button"
+                    >
+                        + إضافة أول مشروع
+                    </button>
+
                 </div>
 
             `;
@@ -1101,6 +1412,7 @@ async function loadProjects() {
     } catch (error) {
 
         console.error(
+            "Load projects error:",
             error
         );
 
@@ -1142,15 +1454,20 @@ function createProjectCard(
 
     const categories = {
 
-        gis: "GIS",
+        gis:
+            "GIS",
 
-        surveying: "Surveying",
+        surveying:
+            "Surveying",
 
         "remote-sensing":
             "Remote Sensing",
 
         programming:
-            "Programming"
+            "Programming",
+
+        civil3d:
+            "Civil 3D"
 
     };
 
@@ -1275,6 +1592,7 @@ function createProjectCard(
                         data-id="${escapeHTML(
                             project.id
                         )}"
+                        type="button"
                     >
                         ✏️ تعديل
                     </button>
@@ -1285,9 +1603,28 @@ function createProjectCard(
                         data-id="${escapeHTML(
                             project.id
                         )}"
+                        type="button"
                     >
                         🗑️ حذف
                     </button>
+
+
+                    ${
+                        project.projectLink
+                            ? `
+                                <a
+                                    href="${escapeHTML(
+                                        project.projectLink
+                                    )}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="btn-view"
+                                >
+                                    🔗 فتح
+                                </a>
+                            `
+                            : ""
+                    }
 
                 </div>
 
@@ -1301,7 +1638,7 @@ function createProjectCard(
 
 
 /* =========================================================
-   PROJECT EVENTS
+   PROJECT CARD EVENTS
    ========================================================= */
 
 function attachProjectCardEvents() {
@@ -1371,7 +1708,8 @@ async function editProject(
             );
 
 
-        let project = null;
+        let project =
+            null;
 
 
         snapshot.forEach(
@@ -1384,7 +1722,8 @@ async function editProject(
 
                     project = {
 
-                        id: item.id,
+                        id:
+                            item.id,
 
                         ...item.data()
 
@@ -1421,8 +1760,10 @@ async function editProject(
     } catch (error) {
 
         console.error(
+            "Edit project error:",
             error
         );
+
 
         alert(
             "حدث خطأ أثناء تحميل المشروع."
@@ -1476,8 +1817,10 @@ async function deleteProject(
     } catch (error) {
 
         console.error(
+            "Delete project error:",
             error
         );
+
 
         alert(
             "حدث خطأ أثناء الحذف:\n\n" +
@@ -1526,7 +1869,7 @@ function getCertificateFormHTML(
                 <input
                     type="text"
                     id="certificateTitle"
-                    placeholder="مثال: ArcGIS Pro Training"
+                    placeholder="ArcGIS Pro Training"
                     value="${escapeHTML(
                         certificate?.title || ""
                     )}"
@@ -1545,7 +1888,7 @@ function getCertificateFormHTML(
                 <input
                     type="text"
                     id="certificateIssuer"
-                    placeholder="مثال: GeoSteps"
+                    placeholder="GeoSteps"
                     value="${escapeHTML(
                         certificate?.issuer || ""
                     )}"
@@ -1667,21 +2010,24 @@ function getCertificateFormHTML(
    ADD CERTIFICATE
    ========================================================= */
 
-if (addCertificateBtn) {
+function openAddCertificateModal() {
 
-    addCertificateBtn.addEventListener(
+    openModal(
+        "إضافة شهادة جديدة",
+        getCertificateFormHTML()
+    );
+
+
+    attachCertificateFormEvents();
+
+}
+
+
+if (addCertificateButton) {
+
+    addCertificateButton.addEventListener(
         "click",
-        () => {
-
-            openModal(
-                "إضافة شهادة جديدة",
-                getCertificateFormHTML()
-            );
-
-
-            attachCertificateFormEvents();
-
-        }
+        openAddCertificateModal
     );
 
 }
@@ -1874,8 +2220,10 @@ async function saveCertificate() {
     } catch (error) {
 
         console.error(
+            "Save certificate error:",
             error
         );
+
 
         alert(
             "حدث خطأ أثناء حفظ الشهادة:\n\n" +
@@ -1932,7 +2280,8 @@ async function loadCertificates() {
 
                 certificates.push({
 
-                    id: item.id,
+                    id:
+                        item.id,
 
                     ...item.data()
 
@@ -1975,6 +2324,14 @@ async function loadCertificates() {
                         ابدأ بإضافة أول شهادة.
                     </p>
 
+                    <button
+                        class="primary-button"
+                        data-action="add-certificate"
+                        type="button"
+                    >
+                        + إضافة أول شهادة
+                    </button>
+
                 </div>
 
             `;
@@ -2005,6 +2362,7 @@ async function loadCertificates() {
     } catch (error) {
 
         console.error(
+            "Load certificates error:",
             error
         );
 
@@ -2144,6 +2502,7 @@ function createCertificateCard(
                         data-id="${escapeHTML(
                             certificate.id
                         )}"
+                        type="button"
                     >
                         ✏️ تعديل
                     </button>
@@ -2154,6 +2513,7 @@ function createCertificateCard(
                         data-id="${escapeHTML(
                             certificate.id
                         )}"
+                        type="button"
                     >
                         🗑️ حذف
                     </button>
@@ -2188,7 +2548,7 @@ function createCertificateCard(
 
 
 /* =========================================================
-   CERTIFICATE EVENTS
+   CERTIFICATE CARD EVENTS
    ========================================================= */
 
 function attachCertificateCardEvents() {
@@ -2258,7 +2618,8 @@ async function editCertificate(
             );
 
 
-        let certificate = null;
+        let certificate =
+            null;
 
 
         snapshot.forEach(
@@ -2271,7 +2632,8 @@ async function editCertificate(
 
                     certificate = {
 
-                        id: item.id,
+                        id:
+                            item.id,
 
                         ...item.data()
 
@@ -2308,8 +2670,10 @@ async function editCertificate(
     } catch (error) {
 
         console.error(
+            "Edit certificate error:",
             error
         );
+
 
         alert(
             "حدث خطأ أثناء تحميل الشهادة."
@@ -2363,8 +2727,10 @@ async function deleteCertificate(
     } catch (error) {
 
         console.error(
+            "Delete certificate error:",
             error
         );
+
 
         alert(
             "حدث خطأ أثناء حذف الشهادة:\n\n" +
@@ -2372,6 +2738,162 @@ async function deleteCertificate(
         );
 
     }
+
+}
+
+
+/* =========================================================
+   COURSES - TEMPORARY
+   ========================================================= */
+
+function showCoursesPlaceholder() {
+
+    if (!coursesContainer) {
+        return;
+    }
+
+
+    coursesContainer.innerHTML = `
+
+        <div class="empty-state">
+
+            <div class="empty-icon">
+                📚
+            </div>
+
+            <h3>
+                قسم الكورسات
+            </h3>
+
+            <p>
+                قسم الكورسات جاهز في لوحة التحكم، وسيتم ربطه بـ Firestore في الخطوة التالية.
+            </p>
+
+            <button
+                class="primary-button"
+                data-action="add-course"
+                type="button"
+            >
+                + إضافة كورس
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+
+function openCourseComingSoon() {
+
+    openModal(
+        "إضافة كورس",
+        `
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    📚
+                </div>
+
+                <h3>
+                    إدارة الكورسات
+                </h3>
+
+                <p>
+                    سنربط الكورسات بـ Firestore في الخطوة التالية.
+                </p>
+
+            </div>
+        `
+    );
+
+}
+
+
+if (addCourseButton) {
+
+    addCourseButton.addEventListener(
+        "click",
+        openCourseComingSoon
+    );
+
+}
+
+
+/* =========================================================
+   SKILLS - TEMPORARY
+   ========================================================= */
+
+function showSkillsPlaceholder() {
+
+    if (!skillsContainer) {
+        return;
+    }
+
+
+    skillsContainer.innerHTML = `
+
+        <div class="empty-state">
+
+            <div class="empty-icon">
+                💡
+            </div>
+
+            <h3>
+                Skills Management
+            </h3>
+
+            <p>
+                إدارة المهارات سيتم ربطها بـ Firestore في الخطوة التالية.
+            </p>
+
+            <button
+                class="primary-button"
+                data-action="add-skill"
+                type="button"
+            >
+                + إضافة مهارة
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+
+function openSkillComingSoon() {
+
+    openModal(
+        "إضافة مهارة",
+        `
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    💡
+                </div>
+
+                <h3>
+                    إدارة المهارات
+                </h3>
+
+                <p>
+                    سنربط المهارات بـ Firestore في الخطوة التالية.
+                </p>
+
+            </div>
+        `
+    );
+
+}
+
+
+if (addSkillButton) {
+
+    addSkillButton.addEventListener(
+        "click",
+        openSkillComingSoon
+    );
 
 }
 
@@ -2447,80 +2969,6 @@ async function updateDashboardStats() {
 
 
 /* =========================================================
-   COURSES - TEMPORARY
-   ========================================================= */
-
-if (addCourseBtn) {
-
-    addCourseBtn.addEventListener(
-        "click",
-        () => {
-
-            openModal(
-                "إضافة كورس",
-                `
-                    <div class="empty-state">
-
-                        <div class="empty-icon">
-                            📚
-                        </div>
-
-                        <h3>
-                            قسم الكورسات
-                        </h3>
-
-                        <p>
-                            سنقوم بربط الكورسات بـ Firestore بعد الانتهاء من الشهادات.
-                        </p>
-
-                    </div>
-                `
-            );
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   SKILLS - TEMPORARY
-   ========================================================= */
-
-if (addSkillBtn) {
-
-    addSkillBtn.addEventListener(
-        "click",
-        () => {
-
-            openModal(
-                "إضافة مهارة",
-                `
-                    <div class="empty-state">
-
-                        <div class="empty-icon">
-                            🛠️
-                        </div>
-
-                        <h3>
-                            قسم المهارات
-                        </h3>
-
-                        <p>
-                            سنقوم بربط المهارات بـ Firestore لاحقًا.
-                        </p>
-
-                    </div>
-                `
-            );
-
-        }
-    );
-
-}
-
-
-/* =========================================================
    AUTH GUARD
    ========================================================= */
 
@@ -2547,6 +2995,7 @@ onAuthStateChanged(
                 auth
             );
 
+
             window.location.href =
                 "login.html";
 
@@ -2561,11 +3010,11 @@ onAuthStateChanged(
         );
 
 
+        await updateDashboardStats();
+
         await loadProjects();
 
         await loadCertificates();
-
-        await updateDashboardStats();
 
     }
 );
@@ -2576,7 +3025,7 @@ onAuthStateChanged(
    ========================================================= */
 
 showSection(
-    "dashboardSection"
+    "dashboard"
 );
 
 
