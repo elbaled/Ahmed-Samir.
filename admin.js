@@ -2,6 +2,10 @@
    SAMIR PORTFOLIO - ADMIN DASHBOARD
    FULL FIRESTORE CRUD VERSION
    Projects + Certificates + Authentication
+
+   IMPORTANT:
+   Save / Edit buttons use EVENT DELEGATION.
+   This is required because the forms are created dynamically.
    ========================================================= */
 
 "use strict";
@@ -25,6 +29,7 @@ import {
     updateDoc,
     deleteDoc,
     doc,
+    getDoc,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
@@ -135,6 +140,10 @@ const modalBody =
 
 let currentAdminUser = null;
 
+let isSavingProject = false;
+
+let isSavingCertificate = false;
+
 
 /* =========================================================
    SECTION TITLES
@@ -187,13 +196,32 @@ function escapeHTML(value) {
 
     }
 
-
     return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
 }
 
@@ -236,10 +264,14 @@ function getFirebaseErrorMessage(error) {
 
         return (
             "Firebase رفض العملية بسبب الصلاحيات.\n\n" +
-            "تأكد أن حساب الأدمن الحالي هو نفس UID:\n" +
+
+            "Admin UID المطلوب:\n" +
+
             ADMIN_UID +
+
             "\n\n" +
-            "وتأكد أن Firestore Rules تم نشرها Publish."
+
+            "تأكد أن Firestore Rules منشورة Publish وأن UID الخاص بالحساب مطابق."
         );
 
     }
@@ -251,7 +283,7 @@ function getFirebaseErrorMessage(error) {
     ) {
 
         return (
-            "المستخدم غير مسجل الدخول إلى Firebase."
+            "المستخدم غير مسجل الدخول في Firebase."
         );
 
     }
@@ -281,8 +313,34 @@ function getFirebaseErrorMessage(error) {
     }
 
 
-    return message ||
-        "حدث خطأ غير معروف في Firebase.";
+    if (
+        code ===
+        "failed-precondition"
+    ) {
+
+        return (
+            "Firebase يحتاج إلى إعداد إضافي قبل تنفيذ العملية."
+        );
+
+    }
+
+
+    if (
+        code ===
+        "unavailable"
+    ) {
+
+        return (
+            "Firebase غير متاح حاليًا. تحقق من الإنترنت وحاول مرة أخرى."
+        );
+
+    }
+
+
+    return (
+        message ||
+        "حدث خطأ غير معروف في Firebase."
+    );
 
 }
 
@@ -298,19 +356,34 @@ function checkAdmin() {
 
 
     console.log(
-        "Current Firebase User:",
+        "========================================"
+    );
+
+    console.log(
+        "ADMIN CHECK"
+    );
+
+    console.log(
+        "Current user:",
         user
     );
 
 
     if (!user) {
 
+        console.error(
+            "NO FIREBASE USER"
+        );
+
+
         alert(
             "أنت غير مسجل الدخول في Firebase.\n\nسيتم إعادتك لصفحة تسجيل الدخول."
         );
 
+
         window.location.href =
             "login.html";
+
 
         return false;
 
@@ -323,7 +396,7 @@ function checkAdmin() {
     );
 
     console.log(
-        "Required Admin UID:",
+        "Required UID:",
         ADMIN_UID
     );
 
@@ -333,9 +406,16 @@ function checkAdmin() {
         ADMIN_UID
     ) {
 
-        alert(
-            "هذا الحساب ليس حساب الأدمن."
+        console.error(
+            "UID DOES NOT MATCH"
         );
+
+
+        alert(
+            "هذا الحساب ليس حساب الأدمن.\n\nUID الحالي:\n" +
+            user.uid
+        );
+
 
         return false;
 
@@ -346,7 +426,138 @@ function checkAdmin() {
         user;
 
 
+    console.log(
+        "ADMIN CHECK PASSED"
+    );
+
+    console.log(
+        "========================================"
+    );
+
+
     return true;
+
+}
+
+
+/* =========================================================
+   FIREBASE CONNECTION TEST
+   ========================================================= */
+
+async function testFirebaseConnection() {
+
+    console.log(
+        "========================================"
+    );
+
+    console.log(
+        "FIREBASE CONNECTION TEST"
+    );
+
+
+    try {
+
+        const user =
+            auth.currentUser;
+
+
+        if (!user) {
+
+            console.error(
+                "Firebase Auth: NO USER"
+            );
+
+            return false;
+
+        }
+
+
+        console.log(
+            "Firebase Auth: OK"
+        );
+
+
+        console.log(
+            "UID:",
+            user.uid
+        );
+
+
+        console.log(
+            "Testing Firestore read..."
+        );
+
+
+        const projectsSnapshot =
+            await getDocs(
+                collection(
+                    db,
+                    PROJECTS_COLLECTION
+                )
+            );
+
+
+        console.log(
+            "Firestore read: OK"
+        );
+
+
+        console.log(
+            "Projects documents:",
+            projectsSnapshot.size
+        );
+
+
+        const certificatesSnapshot =
+            await getDocs(
+                collection(
+                    db,
+                    CERTIFICATES_COLLECTION
+                )
+            );
+
+
+        console.log(
+            "Certificates read: OK"
+        );
+
+
+        console.log(
+            "Certificates documents:",
+            certificatesSnapshot.size
+        );
+
+
+        console.log(
+            "FIREBASE CONNECTION TEST PASSED"
+        );
+
+
+        console.log(
+            "========================================"
+        );
+
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            "FIREBASE CONNECTION TEST FAILED",
+            error
+        );
+
+
+        console.error(
+            getFirebaseErrorMessage(
+                error
+            )
+        );
+
+
+        return false;
+
+    }
 
 }
 
@@ -690,6 +901,8 @@ document.addEventListener(
 
             openAddProjectModal();
 
+            return;
+
         }
 
 
@@ -699,6 +912,8 @@ document.addEventListener(
         ) {
 
             openAddCertificateModal();
+
+            return;
 
         }
 
@@ -710,6 +925,8 @@ document.addEventListener(
 
             openCourseComingSoon();
 
+            return;
+
         }
 
 
@@ -719,6 +936,386 @@ document.addEventListener(
         ) {
 
             openSkillComingSoon();
+
+            return;
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   IMPORTANT:
+   DYNAMIC SAVE BUTTONS
+   EVENT DELEGATION
+   ========================================================= */
+
+document.addEventListener(
+    "click",
+    async (event) => {
+
+        const projectSaveButton =
+            event.target.closest(
+                "#saveProjectBtn"
+            );
+
+
+        if (projectSaveButton) {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+
+            console.log(
+                "========================================"
+            );
+
+            console.log(
+                "PROJECT SAVE BUTTON DETECTED"
+            );
+
+            console.log(
+                "========================================"
+            );
+
+
+            if (
+                isSavingProject
+            ) {
+
+                console.warn(
+                    "Project save already running."
+                );
+
+                return;
+
+            }
+
+
+            isSavingProject =
+                true;
+
+
+            projectSaveButton.disabled =
+                true;
+
+
+            projectSaveButton.textContent =
+                "جاري الحفظ...";
+
+
+            try {
+
+                await saveProject();
+
+            } catch (error) {
+
+                console.error(
+                    "PROJECT SAVE EVENT ERROR:",
+                    error
+                );
+
+
+                alert(
+                    "حدث خطأ أثناء حفظ المشروع:\n\n" +
+                    getFirebaseErrorMessage(
+                        error
+                    )
+                );
+
+            } finally {
+
+                isSavingProject =
+                    false;
+
+
+                const currentButton =
+                    document.getElementById(
+                        "saveProjectBtn"
+                    );
+
+
+                if (currentButton) {
+
+                    currentButton.disabled =
+                        false;
+
+
+                    const projectId =
+                        document.getElementById(
+                            "projectId"
+                        )?.value.trim() || "";
+
+
+                    currentButton.textContent =
+                        projectId
+                            ? "حفظ التعديلات"
+                            : "إضافة المشروع";
+
+                }
+
+            }
+
+
+            return;
+
+        }
+
+
+        const certificateSaveButton =
+            event.target.closest(
+                "#saveCertificateBtn"
+            );
+
+
+        if (certificateSaveButton) {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+
+            console.log(
+                "========================================"
+            );
+
+            console.log(
+                "CERTIFICATE SAVE BUTTON DETECTED"
+            );
+
+            console.log(
+                "========================================"
+            );
+
+
+            if (
+                isSavingCertificate
+            ) {
+
+                console.warn(
+                    "Certificate save already running."
+                );
+
+                return;
+
+            }
+
+
+            isSavingCertificate =
+                true;
+
+
+            certificateSaveButton.disabled =
+                true;
+
+
+            certificateSaveButton.textContent =
+                "جاري الحفظ...";
+
+
+            try {
+
+                await saveCertificate();
+
+            } catch (error) {
+
+                console.error(
+                    "CERTIFICATE SAVE EVENT ERROR:",
+                    error
+                );
+
+
+                alert(
+                    "حدث خطأ أثناء حفظ الشهادة:\n\n" +
+                    getFirebaseErrorMessage(
+                        error
+                    )
+                );
+
+            } finally {
+
+                isSavingCertificate =
+                    false;
+
+
+                const currentButton =
+                    document.getElementById(
+                        "saveCertificateBtn"
+                    );
+
+
+                if (currentButton) {
+
+                    currentButton.disabled =
+                        false;
+
+
+                    const certificateId =
+                        document.getElementById(
+                            "certificateId"
+                        )?.value.trim() || "";
+
+
+                    currentButton.textContent =
+                        certificateId
+                            ? "حفظ التعديلات"
+                            : "إضافة الشهادة";
+
+                }
+
+            }
+
+
+            return;
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   DYNAMIC CANCEL BUTTONS
+   ========================================================= */
+
+document.addEventListener(
+    "click",
+    (event) => {
+
+        const projectCancelButton =
+            event.target.closest(
+                "#cancelProjectBtn"
+            );
+
+
+        if (projectCancelButton) {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+            closeModal();
+
+            return;
+
+        }
+
+
+        const certificateCancelButton =
+            event.target.closest(
+                "#cancelCertificateBtn"
+            );
+
+
+        if (certificateCancelButton) {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+            closeModal();
+
+            return;
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   PROJECT EDIT / DELETE DELEGATION
+   ========================================================= */
+
+document.addEventListener(
+    "click",
+    (event) => {
+
+        const editButton =
+            event.target.closest(
+                ".edit-project-btn"
+            );
+
+
+        if (editButton) {
+
+            event.preventDefault();
+
+            editProject(
+                editButton.dataset.id
+            );
+
+            return;
+
+        }
+
+
+        const deleteButton =
+            event.target.closest(
+                ".delete-project-btn"
+            );
+
+
+        if (deleteButton) {
+
+            event.preventDefault();
+
+            deleteProject(
+                deleteButton.dataset.id
+            );
+
+            return;
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   CERTIFICATE EDIT / DELETE DELEGATION
+   ========================================================= */
+
+document.addEventListener(
+    "click",
+    (event) => {
+
+        const editButton =
+            event.target.closest(
+                ".edit-certificate-btn"
+            );
+
+
+        if (editButton) {
+
+            event.preventDefault();
+
+            editCertificate(
+                editButton.dataset.id
+            );
+
+            return;
+
+        }
+
+
+        const deleteButton =
+            event.target.closest(
+                ".delete-certificate-btn"
+            );
+
+
+        if (deleteButton) {
+
+            event.preventDefault();
+
+            deleteCertificate(
+                deleteButton.dataset.id
+            );
+
+            return;
 
         }
 
@@ -824,6 +1421,14 @@ function openModal(
 
     if (!modal) {
 
+        console.error(
+            "MODAL ELEMENT NOT FOUND"
+        );
+
+        alert(
+            "خطأ: نافذة الإضافة غير موجودة في admin.html."
+        );
+
         return;
 
     }
@@ -858,6 +1463,12 @@ function openModal(
 
     document.body.classList.add(
         "modal-open"
+    );
+
+
+    console.log(
+        "MODAL OPENED:",
+        title
     );
 
 }
@@ -928,7 +1539,7 @@ document.addEventListener(
 
 
 /* =========================================================
-   PROJECT FORM
+   PROJECT FORM HTML
    ========================================================= */
 
 function getProjectFormHTML(
@@ -973,6 +1584,7 @@ function getProjectFormHTML(
             id="projectForm"
             class="admin-form"
             novalidate
+            onsubmit="return false;"
         >
 
             <input
@@ -1167,7 +1779,7 @@ function getProjectFormHTML(
                 </label>
 
                 <input
-                    type="url"
+                    type="text"
                     id="projectImageUrl"
                     placeholder="https://..."
                     value="${escapeHTML(
@@ -1189,7 +1801,7 @@ function getProjectFormHTML(
                 </label>
 
                 <input
-                    type="url"
+                    type="text"
                     id="projectLink"
                     placeholder="https://github.com/..."
                     value="${escapeHTML(
@@ -1233,10 +1845,15 @@ function getProjectFormHTML(
 
 
 /* =========================================================
-   ADD PROJECT
+   OPEN ADD PROJECT
    ========================================================= */
 
 function openAddProjectModal() {
+
+    console.log(
+        "OPEN ADD PROJECT"
+    );
+
 
     if (!checkAdmin()) {
 
@@ -1251,7 +1868,17 @@ function openAddProjectModal() {
     );
 
 
-    attachProjectFormEvents();
+    console.log(
+        "PROJECT FORM CREATED"
+    );
+
+
+    console.log(
+        "SAVE BUTTON EXISTS:",
+        !!document.getElementById(
+            "saveProjectBtn"
+        )
+    );
 
 }
 
@@ -1272,127 +1899,21 @@ if (addProjectButton) {
 
 function attachProjectFormEvents() {
 
-    const form =
-        document.getElementById(
-            "projectForm"
-        );
+    /*
+       IMPORTANT:
 
+       We intentionally do NOT attach a click listener
+       to the dynamic save button here.
 
-    const cancel =
-        document.getElementById(
-            "cancelProjectBtn"
-        );
+       The global document click listener above
+       handles #saveProjectBtn.
 
-
-    const saveButton =
-        document.getElementById(
-            "saveProjectBtn"
-        );
+       This prevents duplicate listeners.
+    */
 
 
     console.log(
-        "PROJECT FORM:",
-        form
-    );
-
-    console.log(
-        "SAVE PROJECT BUTTON:",
-        saveButton
-    );
-
-
-    if (cancel) {
-
-        cancel.addEventListener(
-            "click",
-            (event) => {
-
-                event.preventDefault();
-
-                closeModal();
-
-            }
-        );
-
-    }
-
-
-    if (!saveButton) {
-
-        console.error(
-            "SAVE PROJECT BUTTON NOT FOUND"
-        );
-
-        alert(
-            "خطأ: زر حفظ المشروع غير موجود."
-        );
-
-        return;
-
-    }
-
-
-    saveButton.addEventListener(
-        "click",
-        async (event) => {
-
-            event.preventDefault();
-
-
-            console.log(
-                "================================"
-            );
-
-            console.log(
-                "SAVE PROJECT BUTTON CLICKED"
-            );
-
-            console.log(
-                "================================"
-            );
-
-
-            saveButton.disabled = true;
-
-            saveButton.textContent =
-                "جاري الحفظ...";
-
-
-            try {
-
-                await saveProject();
-
-            } catch (error) {
-
-                console.error(
-                    "SAVE PROJECT BUTTON ERROR:",
-                    error
-                );
-
-                alert(
-                    "حدث خطأ أثناء الحفظ:\n\n" +
-                    error.message
-                );
-
-            } finally {
-
-                saveButton.disabled = false;
-
-
-                const projectId =
-                    document.getElementById(
-                        "projectId"
-                    )?.value.trim() || "";
-
-
-                saveButton.textContent =
-                    projectId
-                        ? "حفظ التعديلات"
-                        : "إضافة المشروع";
-
-            }
-
-        }
+        "Project form ready for delegated events."
     );
 
 }
@@ -1405,7 +1926,11 @@ function attachProjectFormEvents() {
 async function saveProject() {
 
     console.log(
-        "========== SAVE PROJECT =========="
+        "========================================"
+    );
+
+    console.log(
+        "SAVE PROJECT STARTED"
     );
 
 
@@ -1465,7 +1990,7 @@ async function saveProject() {
 
 
     console.log(
-        "Project data:",
+        "PROJECT DATA:",
         {
             id,
             title,
@@ -1494,6 +2019,41 @@ async function saveProject() {
 
         alert(
             "من فضلك اكتب وصف المشروع."
+        );
+
+        return;
+
+    }
+
+
+    const user =
+        auth.currentUser;
+
+
+    if (!user) {
+
+        alert(
+            "Firebase Auth غير متصل بالحساب الحالي."
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        "CURRENT USER UID:",
+        user.uid
+    );
+
+
+    if (
+        user.uid !==
+        ADMIN_UID
+    ) {
+
+        alert(
+            "حساب Firebase الحالي ليس حساب الأدمن."
         );
 
         return;
@@ -1532,41 +2092,15 @@ async function saveProject() {
 
     try {
 
-        const user =
-            auth.currentUser;
-
-
         console.log(
-            "Writing with UID:",
-            user?.uid
+            "Firebase write operation starting..."
         );
-
-
-        if (!user) {
-
-            throw new Error(
-                "Firebase Auth user is missing."
-            );
-
-        }
-
-
-        if (
-            user.uid !==
-            ADMIN_UID
-        ) {
-
-            throw new Error(
-                "Current user is not the authorized admin."
-            );
-
-        }
 
 
         if (id) {
 
             console.log(
-                "Updating project:",
+                "UPDATING PROJECT:",
                 id
             );
 
@@ -1582,7 +2116,7 @@ async function saveProject() {
 
 
             console.log(
-                "Project updated successfully."
+                "PROJECT UPDATE SUCCESS"
             );
 
 
@@ -1593,7 +2127,7 @@ async function saveProject() {
         } else {
 
             console.log(
-                "Adding new project..."
+                "ADDING NEW PROJECT"
             );
 
 
@@ -1612,7 +2146,7 @@ async function saveProject() {
 
 
             console.log(
-                "New project ID:",
+                "NEW PROJECT ID:",
                 newDocument.id
             );
 
@@ -1631,6 +2165,11 @@ async function saveProject() {
 
 
         await updateDashboardStats();
+
+
+        console.log(
+            "SAVE PROJECT FINISHED SUCCESSFULLY"
+        );
 
 
     } catch (error) {
@@ -1765,9 +2304,6 @@ async function loadProjects() {
                     )
                     .join("");
 
-
-            attachProjectCardEvents();
-
         }
 
 
@@ -1855,6 +2391,7 @@ function createProjectCard(
     const image =
         project.imageUrl
             ? `
+
                 <img
                     src="${escapeHTML(
                         project.imageUrl
@@ -1864,13 +2401,16 @@ function createProjectCard(
                     )}"
                     class="project-admin-image"
                 >
+
             `
             : `
+
                 <div
                     class="project-admin-placeholder"
                 >
                     📁
                 </div>
+
             `;
 
 
@@ -1937,6 +2477,7 @@ function createProjectCard(
                 ${
                     project.tools
                         ? `
+
                             <div
                                 class="project-tools"
                             >
@@ -1950,6 +2491,7 @@ function createProjectCard(
                                 )}
 
                             </div>
+
                         `
                         : ""
                 }
@@ -1984,6 +2526,7 @@ function createProjectCard(
                     ${
                         project.projectLink
                             ? `
+
                                 <a
                                     href="${escapeHTML(
                                         project.projectLink
@@ -1994,6 +2537,7 @@ function createProjectCard(
                                 >
                                     🔗 فتح
                                 </a>
+
                             `
                             : ""
                     }
@@ -2005,58 +2549,6 @@ function createProjectCard(
         </article>
 
     `;
-
-}
-
-
-/* =========================================================
-   PROJECT CARD EVENTS
-   ========================================================= */
-
-function attachProjectCardEvents() {
-
-    document
-        .querySelectorAll(
-            ".edit-project-btn"
-        )
-        .forEach(
-            (button) => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        editProject(
-                            button.dataset.id
-                        );
-
-                    }
-                );
-
-            }
-        );
-
-
-    document
-        .querySelectorAll(
-            ".delete-project-btn"
-        )
-        .forEach(
-            (button) => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        deleteProject(
-                            button.dataset.id
-                        );
-
-                    }
-                );
-
-            }
-        );
 
 }
 
@@ -2089,43 +2581,23 @@ async function editProject(
 
     try {
 
-        const snapshot =
-            await getDocs(
-                collection(
-                    db,
-                    PROJECTS_COLLECTION
-                )
+        const projectReference =
+            doc(
+                db,
+                PROJECTS_COLLECTION,
+                projectId
             );
 
 
-        let project =
-            null;
+        const projectSnapshot =
+            await getDoc(
+                projectReference
+            );
 
 
-        snapshot.forEach(
-            (item) => {
-
-                if (
-                    item.id ===
-                    projectId
-                ) {
-
-                    project = {
-
-                        id:
-                            item.id,
-
-                        ...item.data()
-
-                    };
-
-                }
-
-            }
-        );
-
-
-        if (!project) {
+        if (
+            !projectSnapshot.exists()
+        ) {
 
             alert(
                 "لم يتم العثور على المشروع."
@@ -2136,6 +2608,16 @@ async function editProject(
         }
 
 
+        const project = {
+
+            id:
+                projectSnapshot.id,
+
+            ...projectSnapshot.data()
+
+        };
+
+
         openModal(
             "تعديل المشروع",
             getProjectFormHTML(
@@ -2144,8 +2626,10 @@ async function editProject(
         );
 
 
-        attachProjectFormEvents();
-
+        console.log(
+            "PROJECT EDIT FORM OPENED:",
+            project
+        );
 
     } catch (error) {
 
@@ -2209,7 +2693,7 @@ async function deleteProject(
     try {
 
         console.log(
-            "Deleting project:",
+            "DELETING PROJECT:",
             projectId
         );
 
@@ -2224,7 +2708,7 @@ async function deleteProject(
 
 
         console.log(
-            "Project deleted successfully."
+            "PROJECT DELETE SUCCESS"
         );
 
 
@@ -2260,7 +2744,7 @@ async function deleteProject(
 
 
 /* =========================================================
-   CERTIFICATE FORM
+   CERTIFICATE FORM HTML
    ========================================================= */
 
 function getCertificateFormHTML(
@@ -2277,6 +2761,7 @@ function getCertificateFormHTML(
             id="certificateForm"
             class="admin-form"
             novalidate
+            onsubmit="return false;"
         >
 
             <input
@@ -2368,7 +2853,7 @@ function getCertificateFormHTML(
                 </label>
 
                 <input
-                    type="url"
+                    type="text"
                     id="certificateImageUrl"
                     placeholder="https://..."
                     value="${escapeHTML(
@@ -2390,7 +2875,7 @@ function getCertificateFormHTML(
                 </label>
 
                 <input
-                    type="url"
+                    type="text"
                     id="certificateUrl"
                     placeholder="https://..."
                     value="${escapeHTML(
@@ -2434,10 +2919,15 @@ function getCertificateFormHTML(
 
 
 /* =========================================================
-   ADD CERTIFICATE
+   OPEN ADD CERTIFICATE
    ========================================================= */
 
 function openAddCertificateModal() {
+
+    console.log(
+        "OPEN ADD CERTIFICATE"
+    );
+
 
     if (!checkAdmin()) {
 
@@ -2452,7 +2942,17 @@ function openAddCertificateModal() {
     );
 
 
-    attachCertificateFormEvents();
+    console.log(
+        "CERTIFICATE FORM CREATED"
+    );
+
+
+    console.log(
+        "SAVE CERTIFICATE BUTTON EXISTS:",
+        !!document.getElementById(
+            "saveCertificateBtn"
+        )
+    );
 
 }
 
@@ -2473,127 +2973,14 @@ if (addCertificateButton) {
 
 function attachCertificateFormEvents() {
 
-    const form =
-        document.getElementById(
-            "certificateForm"
-        );
-
-
-    const cancel =
-        document.getElementById(
-            "cancelCertificateBtn"
-        );
-
-
-    const saveButton =
-        document.getElementById(
-            "saveCertificateBtn"
-        );
+    /*
+       Dynamic buttons are handled by
+       the global document click listener.
+    */
 
 
     console.log(
-        "CERTIFICATE FORM:",
-        form
-    );
-
-    console.log(
-        "SAVE CERTIFICATE BUTTON:",
-        saveButton
-    );
-
-
-    if (cancel) {
-
-        cancel.addEventListener(
-            "click",
-            (event) => {
-
-                event.preventDefault();
-
-                closeModal();
-
-            }
-        );
-
-    }
-
-
-    if (!saveButton) {
-
-        console.error(
-            "SAVE CERTIFICATE BUTTON NOT FOUND"
-        );
-
-        alert(
-            "خطأ: زر حفظ الشهادة غير موجود."
-        );
-
-        return;
-
-    }
-
-
-    saveButton.addEventListener(
-        "click",
-        async (event) => {
-
-            event.preventDefault();
-
-
-            console.log(
-                "================================"
-            );
-
-            console.log(
-                "SAVE CERTIFICATE BUTTON CLICKED"
-            );
-
-            console.log(
-                "================================"
-            );
-
-
-            saveButton.disabled = true;
-
-            saveButton.textContent =
-                "جاري الحفظ...";
-
-
-            try {
-
-                await saveCertificate();
-
-            } catch (error) {
-
-                console.error(
-                    "SAVE CERTIFICATE BUTTON ERROR:",
-                    error
-                );
-
-                alert(
-                    "حدث خطأ أثناء الحفظ:\n\n" +
-                    error.message
-                );
-
-            } finally {
-
-                saveButton.disabled = false;
-
-
-                const certificateId =
-                    document.getElementById(
-                        "certificateId"
-                    )?.value.trim() || "";
-
-
-                saveButton.textContent =
-                    certificateId
-                        ? "حفظ التعديلات"
-                        : "إضافة الشهادة";
-
-            }
-
-        }
+        "Certificate form ready for delegated events."
     );
 
 }
@@ -2606,7 +2993,11 @@ function attachCertificateFormEvents() {
 async function saveCertificate() {
 
     console.log(
-        "========== SAVE CERTIFICATE =========="
+        "========================================"
+    );
+
+    console.log(
+        "SAVE CERTIFICATE STARTED"
     );
 
 
@@ -2660,7 +3051,7 @@ async function saveCertificate() {
 
 
     console.log(
-        "Certificate data:",
+        "CERTIFICATE DATA:",
         {
             id,
             title,
@@ -2688,6 +3079,35 @@ async function saveCertificate() {
 
         alert(
             "من فضلك اكتب الجهة المانحة."
+        );
+
+        return;
+
+    }
+
+
+    const user =
+        auth.currentUser;
+
+
+    if (!user) {
+
+        alert(
+            "Firebase Auth غير متصل بالحساب الحالي."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        user.uid !==
+        ADMIN_UID
+    ) {
+
+        alert(
+            "حساب Firebase الحالي ليس حساب الأدمن."
         );
 
         return;
@@ -2723,41 +3143,10 @@ async function saveCertificate() {
 
     try {
 
-        const user =
-            auth.currentUser;
-
-
-        console.log(
-            "Writing certificate with UID:",
-            user?.uid
-        );
-
-
-        if (!user) {
-
-            throw new Error(
-                "Firebase Auth user is missing."
-            );
-
-        }
-
-
-        if (
-            user.uid !==
-            ADMIN_UID
-        ) {
-
-            throw new Error(
-                "Current user is not the authorized admin."
-            );
-
-        }
-
-
         if (id) {
 
             console.log(
-                "Updating certificate:",
+                "UPDATING CERTIFICATE:",
                 id
             );
 
@@ -2773,7 +3162,7 @@ async function saveCertificate() {
 
 
             console.log(
-                "Certificate updated successfully."
+                "CERTIFICATE UPDATE SUCCESS"
             );
 
 
@@ -2784,7 +3173,7 @@ async function saveCertificate() {
         } else {
 
             console.log(
-                "Adding new certificate..."
+                "ADDING NEW CERTIFICATE"
             );
 
 
@@ -2803,7 +3192,7 @@ async function saveCertificate() {
 
 
             console.log(
-                "New certificate ID:",
+                "NEW CERTIFICATE ID:",
                 newDocument.id
             );
 
@@ -2956,9 +3345,6 @@ async function loadCertificates() {
                     )
                     .join("");
 
-
-            attachCertificateCardEvents();
-
         }
 
 
@@ -3018,6 +3404,7 @@ function createCertificateCard(
     const image =
         certificate.imageUrl
             ? `
+
                 <img
                     src="${escapeHTML(
                         certificate.imageUrl
@@ -3027,13 +3414,16 @@ function createCertificateCard(
                     )}"
                     class="certificate-admin-image"
                 >
+
             `
             : `
+
                 <div
                     class="certificate-placeholder"
                 >
                     🎓
                 </div>
+
             `;
 
 
@@ -3081,6 +3471,7 @@ function createCertificateCard(
                 ${
                     certificate.date
                         ? `
+
                             <p>
 
                                 <strong>
@@ -3092,6 +3483,7 @@ function createCertificateCard(
                                 )}
 
                             </p>
+
                         `
                         : ""
                 }
@@ -3100,11 +3492,13 @@ function createCertificateCard(
                 ${
                     certificate.description
                         ? `
+
                             <p>
                                 ${escapeHTML(
                                     certificate.description
                                 )}
                             </p>
+
                         `
                         : ""
                 }
@@ -3139,6 +3533,7 @@ function createCertificateCard(
                     ${
                         certificate.certificateUrl
                             ? `
+
                                 <a
                                     href="${escapeHTML(
                                         certificate.certificateUrl
@@ -3149,6 +3544,7 @@ function createCertificateCard(
                                 >
                                     🔗 الشهادة
                                 </a>
+
                             `
                             : ""
                     }
@@ -3160,58 +3556,6 @@ function createCertificateCard(
         </article>
 
     `;
-
-}
-
-
-/* =========================================================
-   CERTIFICATE CARD EVENTS
-   ========================================================= */
-
-function attachCertificateCardEvents() {
-
-    document
-        .querySelectorAll(
-            ".edit-certificate-btn"
-        )
-        .forEach(
-            (button) => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        editCertificate(
-                            button.dataset.id
-                        );
-
-                    }
-                );
-
-            }
-        );
-
-
-    document
-        .querySelectorAll(
-            ".delete-certificate-btn"
-        )
-        .forEach(
-            (button) => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        deleteCertificate(
-                            button.dataset.id
-                        );
-
-                    }
-                );
-
-            }
-        );
 
 }
 
@@ -3244,43 +3588,23 @@ async function editCertificate(
 
     try {
 
-        const snapshot =
-            await getDocs(
-                collection(
-                    db,
-                    CERTIFICATES_COLLECTION
-                )
+        const certificateReference =
+            doc(
+                db,
+                CERTIFICATES_COLLECTION,
+                certificateId
             );
 
 
-        let certificate =
-            null;
+        const certificateSnapshot =
+            await getDoc(
+                certificateReference
+            );
 
 
-        snapshot.forEach(
-            (item) => {
-
-                if (
-                    item.id ===
-                    certificateId
-                ) {
-
-                    certificate = {
-
-                        id:
-                            item.id,
-
-                        ...item.data()
-
-                    };
-
-                }
-
-            }
-        );
-
-
-        if (!certificate) {
+        if (
+            !certificateSnapshot.exists()
+        ) {
 
             alert(
                 "لم يتم العثور على الشهادة."
@@ -3291,6 +3615,16 @@ async function editCertificate(
         }
 
 
+        const certificate = {
+
+            id:
+                certificateSnapshot.id,
+
+            ...certificateSnapshot.data()
+
+        };
+
+
         openModal(
             "تعديل الشهادة",
             getCertificateFormHTML(
@@ -3299,8 +3633,10 @@ async function editCertificate(
         );
 
 
-        attachCertificateFormEvents();
-
+        console.log(
+            "CERTIFICATE EDIT FORM OPENED:",
+            certificate
+        );
 
     } catch (error) {
 
@@ -3364,7 +3700,7 @@ async function deleteCertificate(
     try {
 
         console.log(
-            "Deleting certificate:",
+            "DELETING CERTIFICATE:",
             certificateId
         );
 
@@ -3379,7 +3715,7 @@ async function deleteCertificate(
 
 
         console.log(
-            "Certificate deleted successfully."
+            "CERTIFICATE DELETE SUCCESS"
         );
 
 
@@ -3415,7 +3751,7 @@ async function deleteCertificate(
 
 
 /* =========================================================
-   COURSES - TEMPORARY
+   COURSES
    ========================================================= */
 
 function showCoursesPlaceholder() {
@@ -3464,6 +3800,7 @@ function openCourseComingSoon() {
     openModal(
         "إضافة كورس",
         `
+
             <div class="empty-state">
 
                 <div class="empty-icon">
@@ -3479,6 +3816,7 @@ function openCourseComingSoon() {
                 </p>
 
             </div>
+
         `
     );
 
@@ -3496,7 +3834,7 @@ if (addCourseButton) {
 
 
 /* =========================================================
-   SKILLS - TEMPORARY
+   SKILLS
    ========================================================= */
 
 function showSkillsPlaceholder() {
@@ -3544,6 +3882,7 @@ function openSkillComingSoon() {
     openModal(
         "إضافة مهارة",
         `
+
             <div class="empty-state">
 
                 <div class="empty-icon">
@@ -3559,6 +3898,7 @@ function openSkillComingSoon() {
                 </p>
 
             </div>
+
         `
     );
 
@@ -3580,6 +3920,11 @@ if (addSkillButton) {
    ========================================================= */
 
 async function updateDashboardStats() {
+
+    console.log(
+        "UPDATING DASHBOARD STATS"
+    );
+
 
     try {
 
@@ -3633,6 +3978,18 @@ async function updateDashboardStats() {
         }
 
 
+        console.log(
+            "Dashboard stats updated:",
+            {
+                projects:
+                    projectsSnapshot.size,
+
+                certificates:
+                    certificatesSnapshot.size
+            }
+        );
+
+
     } catch (error) {
 
         console.error(
@@ -3654,7 +4011,15 @@ onAuthStateChanged(
     async (user) => {
 
         console.log(
-            "Auth state changed:",
+            "========================================"
+        );
+
+        console.log(
+            "AUTH STATE CHANGED"
+        );
+
+        console.log(
+            "USER:",
             user
         );
 
@@ -3662,12 +4027,13 @@ onAuthStateChanged(
         if (!user) {
 
             console.warn(
-                "No Firebase user."
+                "NO FIREBASE USER"
             );
 
 
             window.location.href =
                 "login.html";
+
 
             return;
 
@@ -3692,7 +4058,8 @@ onAuthStateChanged(
         ) {
 
             alert(
-                "هذا الحساب غير مصرح له بالدخول إلى لوحة الأدمن."
+                "هذا الحساب غير مصرح له بالدخول إلى لوحة الأدمن.\n\nUID الحالي:\n" +
+                user.uid
             );
 
 
@@ -3713,6 +4080,7 @@ onAuthStateChanged(
 
             window.location.href =
                 "login.html";
+
 
             return;
 
@@ -3735,6 +4103,18 @@ onAuthStateChanged(
 
 
         await loadCertificates();
+
+
+        await testFirebaseConnection();
+
+
+        console.log(
+            "ADMIN DASHBOARD READY"
+        );
+
+        console.log(
+            "========================================"
+        );
 
     }
 );
@@ -3764,6 +4144,20 @@ console.log(
 console.log(
     "Admin UID:",
     ADMIN_UID
+);
+
+console.log(
+    "Firestore Projects:",
+    PROJECTS_COLLECTION
+);
+
+console.log(
+    "Firestore Certificates:",
+    CERTIFICATES_COLLECTION
+);
+
+console.log(
+    "Delegated Save Events: ENABLED"
 );
 
 console.log(
