@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Ahmed Samir Portfolio Admin Dashboard"
+    >
+
+    <meta
+        name="theme-color"
+        content="#07111f"
+    >
+
+    <title>Ahmed Samir | Admin Dashboard</title>
+
+    <link
+        rel="stylesheet"
+        href="dashboard.css"
+    >
+
+</head>
+
+<body>
+
+    <!-- =========================================
+         APP
+    ========================================== -->
+
+    <div class="dashboard-app">
+
+        <!-- =====================================
+             SIDEBAR
+        ====================================== -->
+
+        <aside class="sidebar" id="sidebar">
+
+            <!-- Logo -->
+
+            <div class="sidebar-logo">
+
+                <div class="logo-icon">
+                    AS
+                </div>
+
+                <div class="logo-text">
+
+                    <strong>Ahmed Samir</strong>
+
+                    <span>Portfolio Admin</span>
+
+                </div>
+
+            </div>
+
+
+            <!-- Navigation -->
+
+            <nav class="sidebar-nav">
+
+                <a
+                    href="#"
+                    class="nav-item active"
+                    data-section="dashboard"
+                >
+
+                    <span class="nav-icon">⌂</span>
+
+                    <span>Dashboard</span>
+
+                </a>
+
+
+                <a
+                    href="#"
+                    class="nav-item"
+                    data-section="projects"
+                >
+
+                    <span class="nav-icon">▣</span>
+
+                    <span>Projects</span>
+
+                </a>
+
+
+                <a
+                    href="#"
+                    class="nav-item"
+                    data-section="certificates"
+                >
+
+                    <span class="nav-icon">🏆</span>
+
+                    <span>Certificates</span>
+
+                </a>
+
+
+                <a
+                    href="#"
+                    class="nav-item"
+                    data-section="skills"
+                >
+
+                    <span class="nav-icon">⚙</span>
+
+                    <span>Skills</span>
+
+                </a>
+
+
+                <a
+                    href="#"
+                    class="nav-item"
+                    data-section="profile"
+                >
+
+                    <span class="nav-icon">👤</span>
+
+                    <span>Profile</span>
+
+                </a>
+
+            </nav>
+
+
+            <!-- Sidebar Bottom -->
+
+            <div class="sidebar-bottom">
+
+                <button
+                    type="button"
+                    class="sidebar-button"
+                    id="visitSiteButton"
+                >
+
+                    <span>🌐</span>
+
+                    <span>Visit Website</span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="sidebar-button logout-button"
+                    id="logoutButton"
+                >
+
+                    <span>↪</span>
+
+                    <span>Logout</span>
+
+                </button>
+
+            </div>
+
+        </aside>
+
+
+        <!-- =====================================
+             MAIN CONTENT
+        ====================================== -->
+
+        <main class="main-content">
+
+            <!-- Topbar -->
+
+            <header class="topbar">
+
+                <div class="topbar-left">
+
+                    <button
+                        type="button"
+                        class="menu-button"
+                        id="menuButton"
+                        aria-label="Open menu"
+                    >
+                        ☰
+                    </button>
+
+
+                    <div>
+
+                        <h1 id="pageTitle">
+                            Dashboard
+                        </h1>
+
+                        <p id="pageSubtitle">
+                            Welcome to your portfolio control panel.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="topbar-right">
+
+                    <div class="admin-info">
+
+                        <div class="admin-avatar">
+                            AS
+                        </div>
+
+                        <div class="admin-details">
+
+                            <strong>
+                                Ahmed Samir
+                            </strong>
+
+                            <span>
+                                Administrator
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+
+            <!-- =================================
+                 SECTIONS
+            ================================== -->
+
+            <div class="content-area">
+
+
+                <!-- =================================
+                     DASHBOARD SECTION
+                ================================== -->
+
+                <section
+                    class="dashboard-section active-section"
+                    id="dashboardSection"
+                >
+
+                    <div class="section-heading">
+
+                        <div>
+
+                            <span class="section-label">
+                                OVERVIEW
+                            </span>
+
+                            <h2>
+                                Portfolio Overview
+                            </h2>
+
+                            <p>
+                                Manage your portfolio content from one place.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Statistics -->
+
+                    <div class="stats-grid">
+
+
+                        <div class="stat-card">
+
+                            <div class="stat-icon">
+                                📁
+                            </div>
+
+                            <div class="stat-content">
+
+                                <span>
+                                    Projects
+                                </span>
+
+                                <strong id="projectsCount">
+                                    0
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="stat-card">
+
+                            <div class="stat-icon">
+                                🏆
+                            </div>
+
+                            <div class="stat-content">
+
+                                <span>
+                                    Certificates
+                                </span>
+
+                                <strong id="certificatesCount">
+                                    0
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="stat-card">
+
+                            <div class="stat-icon">
+                                ⚙
+                            </div>
+
+                            <div class="stat-content">
+
+                                <span>
+                                    Skills
+                                </span>
+
+                                <strong id="skillsCount">
+                                    0
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="stat-card">
+
+                            <div class="stat-icon">
+                                ☁
+                            </div>
+
+                            <div class="stat-content">
+
+                                <span>
+                                    Cloud Storage
+                                </span>
+
+                                <strong>
+                                    Cloudinary
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+
+                    <!-- Quick Actions -->
+
+                    <div class="dashboard-card">
+
+                        <div class="card-header">
+
+                            <div>
+
+                                <span class="section-label">
+                                    QUICK ACTIONS
+                                </span>
+
+                                <h3>
+                                    Manage Portfolio
+                                </h3>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="quick-actions">
+
+
+                            <button
+                                type="button"
+                                class="quick-action"
+                                data-section="projects"
+                            >
+
+                                <span class="quick-icon">
+                                    📁
+                                </span>
+
+                                <span>
+
+                                    <strong>
+                                        Manage Projects
+                                    </strong>
+
+                                    <small>
+                                        Add and edit portfolio projects
+                                    </small>
+
+                                </span>
+
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="quick-action"
+                                data-section="certificates"
+                            >
+
+                                <span class="quick-icon">
+                                    🏆
+                                </span>
+
+                                <span>
+
+                                    <strong>
+                                        Manage Certificates
+                                    </strong>
+
+                                    <small>
+                                        Add your certificates
+                                    </small>
+
+                                </span>
+
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="quick-action"
+                                data-section="skills"
+                            >
+
+                                <span class="quick-icon">
+                                    ⚙
+                                </span>
+
+                                <span>
+
+                                    <strong>
+                                        Manage Skills
+                                    </strong>
+
+                                    <small>
+                                        Update your professional skills
+                                    </small>
+
+                                </span>
+
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="quick-action"
+                                data-section="profile"
+                            >
+
+                                <span class="quick-icon">
+                                    👤
+                                </span>
+
+                                <span>
+
+                                    <strong>
+                                        Edit Profile
+                                    </strong>
+
+                                    <small>
+                                        Update your personal information
+                                    </small>
+
+                                </span>
+
+                            </button>
+
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================
+                     PROJECTS SECTION
+                ================================== -->
+
+                <section
+                    class="dashboard-section"
+                    id="projectsSection"
+                >
+
+                    <div class="section-heading">
+
+                        <div>
+
+                            <span class="section-label">
+                                PORTFOLIO
+                            </span>
+
+                            <h2>
+                                Projects
+                            </h2>
+
+                            <p>
+                                Add and manage your portfolio projects.
+                            </p>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="primary-button"
+                            id="addProjectButton"
+                        >
+
+                            <span>+</span>
+
+                            Add Project
+
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        class="items-container"
+                        id="projectsContainer"
+                    >
+
+                        <div class="empty-state">
+
+                            <div class="empty-icon">
+                                📁
+                            </div>
+
+                            <h3>
+                                No Projects Yet
+                            </h3>
+
+                            <p>
+                                Your projects will appear here.
+                            </p>
+
+                            <button
+                                type="button"
+                                class="primary-button"
+                                id="emptyAddProjectButton"
+                            >
+                                Add Your First Project
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================
+                     CERTIFICATES SECTION
+                ================================== -->
+
+                <section
+                    class="dashboard-section"
+                    id="certificatesSection"
+                >
+
+                    <div class="section-heading">
+
+                        <div>
+
+                            <span class="section-label">
+                                ACHIEVEMENTS
+                            </span>
+
+                            <h2>
+                                Certificates
+                            </h2>
+
+                            <p>
+                                Manage your certificates and training records.
+                            </p>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="primary-button"
+                            id="addCertificateButton"
+                        >
+
+                            <span>+</span>
+
+                            Add Certificate
+
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        class="items-container"
+                        id="certificatesContainer"
+                    >
+
+                        <div class="empty-state">
+
+                            <div class="empty-icon">
+                                🏆
+                            </div>
+
+                            <h3>
+                                No Certificates Yet
+                            </h3>
+
+                            <p>
+                                Your certificates will appear here.
+                            </p>
+
+                            <button
+                                type="button"
+                                class="primary-button"
+                                id="emptyAddCertificateButton"
+                            >
+                                Add Your First Certificate
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================
+                     SKILLS SECTION
+                ================================== -->
+
+                <section
+                    class="dashboard-section"
+                    id="skillsSection"
+                >
+
+                    <div class="section-heading">
+
+                        <div>
+
+                            <span class="section-label">
+                                EXPERTISE
+                            </span>
+
+                            <h2>
+                                Skills
+                            </h2>
+
+                            <p>
+                                Manage your professional skills.
+                            </p>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="primary-button"
+                            id="addSkillButton"
+                        >
+
+                            <span>+</span>
+
+                            Add Skill
+
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        class="items-container"
+                        id="skillsContainer"
+                    >
+
+                        <div class="empty-state">
+
+                            <div class="empty-icon">
+                                ⚙
+                            </div>
+
+                            <h3>
+                                No Skills Yet
+                            </h3>
+
+                            <p>
+                                Your skills will appear here.
+                            </p>
+
+                            <button
+                                type="button"
+                                class="primary-button"
+                                id="emptyAddSkillButton"
+                            >
+                                Add Your First Skill
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =================================
+                     PROFILE SECTION
+                ================================== -->
+
+                <section
+                    class="dashboard-section"
+                    id="profileSection"
+                >
+
+                    <div class="section-heading">
+
+                        <div>
+
+                            <span class="section-label">
+                                PERSONAL INFORMATION
+                            </span>
+
+                            <h2>
+                                Profile
+                            </h2>
+
+                            <p>
+                                Manage the information displayed on your portfolio.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="profile-card">
+
+                        <div class="profile-header">
+
+                            <div class="profile-avatar">
+                                AS
+                            </div>
+
+                            <div>
+
+                                <h3>
+                                    Ahmed Samir
+                                </h3>
+
+                                <p>
+                                    GIS & Geomatics Student
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="profile-form">
+
+
+                            <div class="form-group">
+
+                                <label for="profileName">
+                                    Full Name
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="profileName"
+                                    placeholder="Ahmed Samir"
+                                >
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label for="profileTitle">
+                                    Professional Title
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="profileTitle"
+                                    placeholder="GIS & Geomatics Student"
+                                >
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label for="profileBio">
+                                    Bio
+                                </label>
+
+                                <textarea
+                                    id="profileBio"
+                                    rows="6"
+                                    placeholder="Write your professional bio..."
+                                ></textarea>
+
+                            </div>
+
+
+                            <div class="form-actions">
+
+                                <button
+                                    type="button"
+                                    class="primary-button"
+                                    id="saveProfileButton"
+                                >
+                                    Save Profile
+                                </button>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+    <!-- =========================================
+         MOBILE OVERLAY
+    ========================================== -->
+
+    <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+    ></div>
+
+
+    <!-- =========================================
+         JAVASCRIPT
+    ========================================== -->
+
+    <script
+        src="dashboard.js"
+    ></script>
+
+</body>
+
+</html>
