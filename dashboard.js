@@ -1,22 +1,24 @@
 /* =========================================================
-   Ahmed Samir Portfolio - Admin Dashboard
+   Samir Portfolio - Admin Dashboard
    Firebase + Firestore
    ========================================================= */
 
 "use strict";
 
-alert("dashboard.js اشتغل");
+
 /* =========================================================
-   FIREBASE
+   Firebase
    ========================================================= */
 
 import {
     auth,
-    db,
-    onAuthStateChanged,
-    signOut
+    db
 } from "./firebase.js";
 
+import {
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
     collection,
@@ -27,100 +29,55 @@ import {
     updateDoc,
     getDoc,
     setDoc,
-    serverTimestamp,
-    query,
-    orderBy
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
 /* =========================================================
-   DOM ELEMENTS
+   DOM
    ========================================================= */
 
-const pageTitle =
-    document.getElementById("pageTitle");
+const pageTitle = document.getElementById("pageTitle");
+const pageSubtitle = document.getElementById("pageSubtitle");
 
-const pageSubtitle =
-    document.getElementById("pageSubtitle");
+const visitSiteButton = document.getElementById("visitSiteButton");
+const logoutButton = document.getElementById("logoutButton");
 
-const navItems =
-    document.querySelectorAll(".nav-item[data-section]");
-
-const sections =
-    document.querySelectorAll(".dashboard-section");
-
-const quickActions =
-    document.querySelectorAll(".quick-action[data-section]");
-
-const menuButton =
-    document.getElementById("menuButton");
-
-const sidebar =
-    document.querySelector(".sidebar");
-
-const sidebarOverlay =
-    document.getElementById("sidebarOverlay");
-
-const visitSiteButton =
-    document.getElementById("visitSiteButton");
-
-const logoutButton =
-    document.getElementById("logoutButton");
-
-
-/* =========================================================
-   PROJECT ELEMENTS
-   ========================================================= */
-
-const addProjectButton =
-    document.getElementById("addProjectButton");
-
-const emptyAddProjectButton =
-    document.getElementById("emptyAddProjectButton");
-
-const projectsContainer =
-    document.getElementById("projectsContainer");
-
-
-/* =========================================================
-   CERTIFICATE ELEMENTS
-   ========================================================= */
+const addProjectButton = document.getElementById("addProjectButton");
+const emptyAddProjectButton = document.getElementById("emptyAddProjectButton");
 
 const addCertificateButton =
     document.getElementById("addCertificateButton");
 
 const emptyAddCertificateButton =
-    document.getElementById(
-        "emptyAddCertificateButton"
-    );
-
-const certificatesContainer =
-    document.getElementById(
-        "certificatesContainer"
-    );
-
-
-/* =========================================================
-   SKILL ELEMENTS
-   ========================================================= */
+    document.getElementById("emptyAddCertificateButton");
 
 const addSkillButton =
     document.getElementById("addSkillButton");
 
 const emptyAddSkillButton =
-    document.getElementById(
-        "emptyAddSkillButton"
-    );
+    document.getElementById("emptyAddSkillButton");
+
+const saveProfileButton =
+    document.getElementById("saveProfileButton");
+
+const projectsContainer =
+    document.getElementById("projectsContainer");
+
+const certificatesContainer =
+    document.getElementById("certificatesContainer");
 
 const skillsContainer =
-    document.getElementById(
-        "skillsContainer"
-    );
+    document.getElementById("skillsContainer");
 
+const projectsCount =
+    document.getElementById("projectsCount");
 
-/* =========================================================
-   PROFILE ELEMENTS
-   ========================================================= */
+const certificatesCount =
+    document.getElementById("certificatesCount");
+
+const skillsCount =
+    document.getElementById("skillsCount");
 
 const profileName =
     document.getElementById("profileName");
@@ -131,480 +88,199 @@ const profileTitle =
 const profileBio =
     document.getElementById("profileBio");
 
-const saveProfileButton =
-    document.getElementById(
-        "saveProfileButton"
-    );
-
 
 /* =========================================================
-   STATISTICS
+   Authentication
    ========================================================= */
 
-const projectsCount =
-    document.getElementById(
-        "projectsCount"
-    );
+onAuthStateChanged(auth, async (user) => {
 
-const certificatesCount =
-    document.getElementById(
-        "certificatesCount"
-    );
+    if (!user) {
 
-const skillsCount =
-    document.getElementById(
-        "skillsCount"
-    );
+        window.location.href = "login.html";
 
-
-/* =========================================================
-   SECTION DATA
-   ========================================================= */
-
-const sectionData = {
-
-    dashboard: {
-
-        title: "Dashboard",
-
-        subtitle:
-            "Welcome to your portfolio control panel."
-
-    },
-
-    projects: {
-
-        title: "Projects",
-
-        subtitle:
-            "Add and manage your portfolio projects."
-
-    },
-
-    certificates: {
-
-        title: "Certificates",
-
-        subtitle:
-            "Manage your certificates and training records."
-
-    },
-
-    skills: {
-
-        title: "Skills",
-
-        subtitle:
-            "Manage your professional skills."
-
-    },
-
-    profile: {
-
-        title: "Profile",
-
-        subtitle:
-            "Manage your personal portfolio information."
-
+        return;
     }
 
-};
+    console.log("Logged in:", user.email);
+    console.log("User UID:", user.uid);
+
+    await loadAllData();
+
+});
 
 
 /* =========================================================
-   AUTHENTICATION
+   Navigation
    ========================================================= */
 
-let currentUser = null;
+function showMessage(message) {
 
-let authReady = false;
+    console.log(message);
 
-
-onAuthStateChanged(
-    auth,
-    async (user) => {
-
-        if (!user) {
-
-            window.location.replace(
-                "login.html"
-            );
-
-            return;
-        }
+}
 
 
-        currentUser = user;
+function activateSection(sectionName) {
 
-        authReady = true;
+    const sections =
+        document.querySelectorAll(".dashboard-section");
 
+    sections.forEach((section) => {
 
-        console.log(
-            "Authenticated user:",
-            currentUser.email
-        );
+        section.classList.remove("active");
 
+    });
 
-        await loadAllData();
+    const target =
+        document.getElementById(sectionName);
+
+    if (target) {
+
+        target.classList.add("active");
 
     }
-);
-
-
-/* =========================================================
-   ADMIN INFORMATION
-   ========================================================= */
-
-function updateAdminInformation(user) {
-
-    const adminEmailElements =
-        document.querySelectorAll(
-            "[data-admin-email]"
-        );
-
-
-    adminEmailElements.forEach(
-        (element) => {
-
-            element.textContent =
-                user.email || "Administrator";
-
-        }
-    );
 
 }
 
 
 /* =========================================================
-   SECTION NAVIGATION
+   Sidebar Navigation
    ========================================================= */
 
-function showSection(sectionName) {
+document.querySelectorAll("[data-section]").forEach((button) => {
 
-    if (!sectionData[sectionName]) {
+    button.addEventListener("click", () => {
 
-        sectionName = "dashboard";
+        const sectionName =
+            button.getAttribute("data-section");
 
-    }
+        activateSection(sectionName);
+
+        updatePageHeader(sectionName);
+
+    });
+
+});
 
 
-    sections.forEach(
-        (section) => {
+/* =========================================================
+   Page Header
+   ========================================================= */
 
-            section.classList.remove(
-                "active"
-            );
+function updatePageHeader(sectionName) {
 
-            section.classList.remove(
-                "active-section"
-            );
+    const titles = {
 
+        dashboard: {
+            title: "Dashboard",
+            subtitle: "Manage your portfolio"
+        },
+
+        projects: {
+            title: "Projects",
+            subtitle: "Manage portfolio projects"
+        },
+
+        certificates: {
+            title: "Certificates",
+            subtitle: "Manage your certificates"
+        },
+
+        skills: {
+            title: "Skills",
+            subtitle: "Manage your professional skills"
+        },
+
+        profile: {
+            title: "Profile",
+            subtitle: "Manage your personal information"
         }
-    );
 
-
-    const targetSection =
-        document.getElementById(
-            `${sectionName}Section`
-        );
-
-
-    if (targetSection) {
-
-        targetSection.classList.add(
-            "active"
-        );
-
-    }
-
-
-    navItems.forEach(
-        (item) => {
-
-            item.classList.toggle(
-                "active",
-                item.dataset.section ===
-                sectionName
-            );
-
-        }
-    );
+    };
 
 
     const data =
-        sectionData[sectionName];
+        titles[sectionName] || titles.dashboard;
 
 
     if (pageTitle) {
 
-        pageTitle.textContent =
-            data.title;
+        pageTitle.textContent = data.title;
 
     }
 
 
     if (pageSubtitle) {
 
-        pageSubtitle.textContent =
-            data.subtitle;
+        pageSubtitle.textContent = data.subtitle;
 
     }
 
+}
 
-    if (
-        window.location.hash !==
-        `#${sectionName}`
-    ) {
 
-        history.replaceState(
-            null,
-            "",
-            `#${sectionName}`
+/* =========================================================
+   Visit Website
+   ========================================================= */
+
+if (visitSiteButton) {
+
+    visitSiteButton.addEventListener("click", () => {
+
+        window.open(
+            "https://elbaled.github.io/AHMED-SAMIR-/",
+            "_blank"
         );
 
-    }
-
-
-    closeMobileSidebar();
-
-
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
     });
 
 }
 
 
 /* =========================================================
-   NAVIGATION EVENTS
-   ========================================================= */
-
-navItems.forEach(
-    (item) => {
-
-        item.addEventListener(
-            "click",
-            (event) => {
-
-                event.preventDefault();
-
-                showSection(
-                    item.dataset.section
-                );
-
-            }
-        );
-
-    }
-);
-
-
-quickActions.forEach(
-    (action) => {
-
-        action.addEventListener(
-            "click",
-            () => {
-
-                showSection(
-                    action.dataset.section
-                );
-
-            }
-        );
-
-    }
-);
-
-
-/* =========================================================
-   MOBILE SIDEBAR
-   ========================================================= */
-
-function openMobileSidebar() {
-
-    if (sidebar) {
-
-        sidebar.classList.add(
-            "mobile-open"
-        );
-
-    }
-
-
-    if (sidebarOverlay) {
-
-        sidebarOverlay.classList.add(
-            "active"
-        );
-
-    }
-
-}
-
-
-function closeMobileSidebar() {
-
-    if (sidebar) {
-
-        sidebar.classList.remove(
-            "mobile-open"
-        );
-
-    }
-
-
-    if (sidebarOverlay) {
-
-        sidebarOverlay.classList.remove(
-            "active"
-        );
-
-    }
-
-}
-
-
-if (menuButton) {
-
-    menuButton.addEventListener(
-        "click",
-        () => {
-
-            if (
-                sidebar &&
-                sidebar.classList.contains(
-                    "mobile-open"
-                )
-            ) {
-
-                closeMobileSidebar();
-
-            }
-
-            else {
-
-                openMobileSidebar();
-
-            }
-
-        }
-    );
-
-}
-
-
-if (sidebarOverlay) {
-
-    sidebarOverlay.addEventListener(
-        "click",
-        closeMobileSidebar
-    );
-
-}
-
-
-document.addEventListener(
-    "keydown",
-    (event) => {
-
-        if (event.key === "Escape") {
-
-            closeMobileSidebar();
-
-        }
-
-    }
-);
-
-
-window.addEventListener(
-    "resize",
-    () => {
-
-        if (window.innerWidth > 850) {
-
-            closeMobileSidebar();
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   VISIT WEBSITE
-   ========================================================= */
-
-if (visitSiteButton) {
-
-    visitSiteButton.addEventListener(
-        "click",
-        () => {
-
-            window.open(
-                "https://elbaled.github.io/AHMED-SAMIR-/",
-                "_blank",
-                "noopener,noreferrer"
-            );
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   LOGOUT
+   Logout
    ========================================================= */
 
 if (logoutButton) {
 
-    logoutButton.addEventListener(
-        "click",
-        async () => {
+    logoutButton.addEventListener("click", async () => {
 
-            const confirmed =
-                window.confirm(
-                    "Are you sure you want to sign out?"
-                );
+        try {
 
+            await signOut(auth);
 
-            if (!confirmed) {
+            window.location.href = "login.html";
 
-                return;
+        } catch (error) {
 
-            }
+            console.error("Logout error:", error);
 
-
-            try {
-
-                await signOut(auth);
-
-
-                window.location.replace(
-                    "login.html"
-                );
-
-            }
-
-            catch (error) {
-
-                console.error(
-                    "Logout error:",
-                    error
-                );
-
-
-                alert(
-                    "Unable to sign out. Please try again."
-                );
-
-            }
+            alert(
+                "حدث خطأ أثناء تسجيل الخروج."
+            );
 
         }
-    );
+
+    });
+
+}
+
+
+/* =========================================================
+   Load All Data
+   ========================================================= */
+
+async function loadAllData() {
+
+    await Promise.all([
+
+        loadProjects(),
+        loadCertificates(),
+        loadSkills(),
+        loadProfile()
+
+    ]);
 
 }
 
@@ -613,137 +289,23 @@ if (logoutButton) {
    PROJECTS
    ========================================================= */
 
-async function addProject() {
-
-    if (!authReady) {
-
-        alert(
-            "Please wait until the dashboard is fully loaded."
-        );
-
-        return;
-
-    }
-
-
-    const name =
-        prompt(
-            "Project name:"
-        );
-
-
-    if (!name || !name.trim()) {
-
-        return;
-
-    }
-
-
-    const description =
-        prompt(
-            "Project description:"
-        );
-
-
-    const link =
-        prompt(
-            "Project link (optional):"
-        );
-
-
-    try {
-
-        await addDoc(
-            collection(
-                db,
-                "projects"
-            ),
-            {
-
-                name:
-                    name.trim(),
-
-                description:
-                    description
-                        ? description.trim()
-                        : "",
-
-                link:
-                    link
-                        ? link.trim()
-                        : "",
-
-                createdBy:
-                    currentUser.uid,
-
-                createdAt:
-                    serverTimestamp()
-
-            }
-        );
-
-
-        alert(
-            "Project added successfully."
-        );
-
-
-        await loadProjects();
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Add project error:",
-            error
-        );
-
-
-        alert(
-            "Failed to add project. Check your Firestore permissions."
-        );
-
-    }
-
-}
-
-
-if (addProjectButton) {
-
-    addProjectButton.addEventListener(
-        "click",
-        addProject
-    );
-
-}
-
-
-if (emptyAddProjectButton) {
-
-    emptyAddProjectButton.addEventListener(
-        "click",
-        addProject
-    );
-
-}
-
-
-/* =========================================================
-   LOAD PROJECTS
-   ========================================================= */
-
 async function loadProjects() {
+
+    if (!projectsContainer) {
+
+        return;
+    }
+
 
     try {
 
         const snapshot =
             await getDocs(
-                collection(
-                    db,
-                    "projects"
-                )
+                collection(db, "projects")
             );
+
+
+        projectsContainer.innerHTML = "";
 
 
         if (projectsCount) {
@@ -754,39 +316,86 @@ async function loadProjects() {
         }
 
 
-        if (
-            !projectsContainer
-        ) {
-
-            return;
-
-        }
-
-
         if (snapshot.empty) {
 
             projectsContainer.innerHTML = `
 
                 <div class="empty-state">
 
-                    <div class="empty-icon">
-                        📁
-                    </div>
+                    <h3>No Projects Yet</h3>
+
+                    <p>
+                        Add your first portfolio project.
+                    </p>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        snapshot.forEach((item) => {
+
+            const data = item.data();
+
+
+            const card =
+                document.createElement("div");
+
+            card.className =
+                "dashboard-card";
+
+
+            card.innerHTML = `
+
+                <div class="dashboard-card-content">
 
                     <h3>
-                        No Projects Yet
+                        ${escapeHTML(data.name || "Untitled Project")}
                     </h3>
 
                     <p>
-                        Your projects will appear here.
+                        ${escapeHTML(data.description || "")}
                     </p>
 
+                    ${
+                        data.link
+                        ?
+                        `
+                        <a
+                            href="${escapeAttribute(data.link)}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="project-link"
+                        >
+                            View Project
+                        </a>
+                        `
+                        :
+                        ""
+                    }
+
+                </div>
+
+                <div class="dashboard-card-actions">
+
                     <button
-                        type="button"
-                        class="primary-button"
-                        id="emptyAddProjectButton"
+                        class="secondary-button"
+                        data-action="edit-project"
+                        data-id="${item.id}"
                     >
-                        Add Your First Project
+                        Edit
+                    </button>
+
+                    <button
+                        class="danger-button"
+                        data-action="delete-project"
+                        data-id="${item.id}"
+                    >
+                        Delete
                     </button>
 
                 </div>
@@ -794,280 +403,331 @@ async function loadProjects() {
             `;
 
 
-            const button =
-                document.getElementById(
-                    "emptyAddProjectButton"
-                );
+            projectsContainer.appendChild(card);
+
+        });
 
 
-            if (button) {
-
-                button.addEventListener(
-                    "click",
-                    addProject
-                );
-
-            }
+        attachProjectActions();
 
 
-            return;
-
-        }
-
-
-        projectsContainer.innerHTML = "";
-
-
-        snapshot.forEach(
-            (item) => {
-
-                const data =
-                    item.data();
-
-
-                const card =
-                    createProjectCard(
-                        item.id,
-                        data
-                    );
-
-
-                projectsContainer.appendChild(
-                    card
-                );
-
-            }
-        );
-
-    }
-
-    catch (error) {
+    } catch (error) {
 
         console.error(
             "Load projects error:",
             error
         );
 
+        projectsContainer.innerHTML = `
+
+            <div class="empty-state">
+
+                <h3>Error Loading Projects</h3>
+
+                <p>
+                    ${escapeHTML(error.message)}
+                </p>
+
+            </div>
+
+        `;
+
     }
 
 }
 
 
 /* =========================================================
-   CREATE PROJECT CARD
+   Add Project
    ========================================================= */
 
-function createProjectCard(
-    id,
-    data
-) {
-
-    const card =
-        document.createElement(
-            "div"
-        );
-
-
-    card.className =
-        "dashboard-card";
-
-
-    const safeName =
-        data.name || "Untitled Project";
-
-
-    const safeDescription =
-        data.description ||
-        "No description added.";
-
-
-    card.innerHTML = `
-
-        <div class="card-header">
-
-            <div>
-
-                <span class="section-label">
-                    PROJECT
-                </span>
-
-                <h3>
-                    ${escapeHTML(safeName)}
-                </h3>
-
-            </div>
-
-        </div>
-
-
-        <p
-            style="
-                color: #94a3b8;
-                line-height: 1.7;
-                margin-bottom: 18px;
-            "
-        >
-            ${escapeHTML(safeDescription)}
-        </p>
-
-
-        <div
-            style="
-                display: flex;
-                gap: 10px;
-                flex-wrap: wrap;
-            "
-        >
-
-            ${
-                data.link
-                    ? `
-                        <a
-                            href="${escapeAttribute(data.link)}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="primary-button"
-                        >
-                            View Project
-                        </a>
-                    `
-                    : ""
-            }
-
-
-            <button
-                type="button"
-                class="secondary-button"
-                data-edit-project="${id}"
-            >
-                Edit
-            </button>
-
-
-            <button
-                type="button"
-                class="danger-button"
-                data-delete-project="${id}"
-            >
-                Delete
-            </button>
-
-        </div>
-
-    `;
-
-
-    const editButton =
-        card.querySelector(
-            "[data-edit-project]"
-        );
-
-
-    const deleteButton =
-        card.querySelector(
-            "[data-delete-project]"
-        );
-
-
-    editButton.addEventListener(
-        "click",
-        () => editProject(
-            id,
-            data
-        )
-    );
-
-
-    deleteButton.addEventListener(
-        "click",
-        () => deleteProject(
-            id
-        )
-    );
-
-
-    return card;
-
-}
-
-
-/* =========================================================
-   EDIT PROJECT
-   ========================================================= */
-
-async function editProject(
-    id,
-    oldData
-) {
+async function addProject() {
 
     const name =
-        prompt(
-            "Project name:",
-            oldData.name || ""
-        );
+        prompt("اكتب اسم المشروع:");
 
-
-    if (!name || !name.trim()) {
+    if (!name) {
 
         return;
-
     }
 
 
     const description =
-        prompt(
-            "Project description:",
-            oldData.description || ""
-        );
+        prompt("اكتب وصف المشروع:");
+
+    if (description === null) {
+
+        return;
+    }
 
 
     const link =
-        prompt(
-            "Project link:",
-            oldData.link || ""
-        );
+        prompt("اكتب رابط المشروع:");
+
+    if (link === null) {
+
+        return;
+    }
 
 
     try {
 
-        await updateDoc(
+        await addDoc(
+
+            collection(db, "projects"),
+
+            {
+
+                name: name.trim(),
+
+                description:
+                    description.trim(),
+
+                link:
+                    link.trim(),
+
+                createdAt:
+                    serverTimestamp(),
+
+                updatedAt:
+                    serverTimestamp()
+
+            }
+
+        );
+
+
+        alert(
+            "تمت إضافة المشروع بنجاح ✅"
+        );
+
+
+        await loadProjects();
+
+
+    } catch (error) {
+
+        console.error(
+            "Add project error:",
+            error
+        );
+
+
+        alert(
+            "فشل إضافة المشروع:\n\n" +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   Project Actions
+   ========================================================= */
+
+function attachProjectActions() {
+
+    document
+        .querySelectorAll(
+            '[data-action="delete-project"]'
+        )
+        .forEach((button) => {
+
+            button.addEventListener(
+                "click",
+                async () => {
+
+                    const id =
+                        button.getAttribute(
+                            "data-id"
+                        );
+
+
+                    if (
+                        !confirm(
+                            "هل تريد حذف هذا المشروع؟"
+                        )
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        await deleteDoc(
+                            doc(
+                                db,
+                                "projects",
+                                id
+                            )
+                        );
+
+
+                        await loadProjects();
+
+
+                    } catch (error) {
+
+                        console.error(
+                            "Delete project error:",
+                            error
+                        );
+
+
+                        alert(
+                            "فشل حذف المشروع:\n\n" +
+                            error.message
+                        );
+
+                    }
+
+                }
+
+            );
+
+        });
+
+
+    document
+        .querySelectorAll(
+            '[data-action="edit-project"]'
+        )
+        .forEach((button) => {
+
+            button.addEventListener(
+                "click",
+                async () => {
+
+                    const id =
+                        button.getAttribute(
+                            "data-id"
+                        );
+
+
+                    await editProject(id);
+
+                }
+
+            );
+
+        });
+
+}
+
+
+/* =========================================================
+   Edit Project
+   ========================================================= */
+
+async function editProject(id) {
+
+    try {
+
+        const reference =
             doc(
                 db,
                 "projects",
                 id
-            ),
+            );
+
+
+        const snapshot =
+            await getDoc(reference);
+
+
+        if (!snapshot.exists()) {
+
+            alert(
+                "المشروع غير موجود."
+            );
+
+            return;
+
+        }
+
+
+        const data =
+            snapshot.data();
+
+
+        const name =
+            prompt(
+                "اسم المشروع:",
+                data.name || ""
+            );
+
+
+        if (name === null) {
+
+            return;
+
+        }
+
+
+        const description =
+            prompt(
+                "وصف المشروع:",
+                data.description || ""
+            );
+
+
+        if (description === null) {
+
+            return;
+
+        }
+
+
+        const link =
+            prompt(
+                "رابط المشروع:",
+                data.link || ""
+            );
+
+
+        if (link === null) {
+
+            return;
+
+        }
+
+
+        await updateDoc(
+
+            reference,
+
             {
 
                 name:
                     name.trim(),
 
                 description:
-                    description
-                        ? description.trim()
-                        : "",
+                    description.trim(),
 
                 link:
-                    link
-                        ? link.trim()
-                        : "",
+                    link.trim(),
 
                 updatedAt:
                     serverTimestamp()
 
             }
+
         );
 
 
         alert(
-            "Project updated successfully."
+            "تم تعديل المشروع بنجاح ✅"
         );
 
 
         await loadProjects();
 
-    }
 
-    catch (error) {
+    } catch (error) {
 
         console.error(
             "Edit project error:",
@@ -1076,58 +736,8 @@ async function editProject(
 
 
         alert(
-            "Failed to update project."
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   DELETE PROJECT
-   ========================================================= */
-
-async function deleteProject(id) {
-
-    const confirmed =
-        confirm(
-            "Delete this project?"
-        );
-
-
-    if (!confirmed) {
-
-        return;
-
-    }
-
-
-    try {
-
-        await deleteDoc(
-            doc(
-                db,
-                "projects",
-                id
-            )
-        );
-
-
-        await loadProjects();
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Delete project error:",
-            error
-        );
-
-
-        alert(
-            "Failed to delete project."
+            "فشل تعديل المشروع:\n\n" +
+            error.message
         );
 
     }
@@ -1139,127 +749,13 @@ async function deleteProject(id) {
    CERTIFICATES
    ========================================================= */
 
-async function addCertificate() {
+async function loadCertificates() {
 
-    const name =
-        prompt(
-            "Certificate name:"
-        );
-
-
-    if (!name || !name.trim()) {
+    if (!certificatesContainer) {
 
         return;
-
     }
 
-
-    const issuer =
-        prompt(
-            "Issuing organization:"
-        );
-
-
-    const year =
-        prompt(
-            "Year:"
-        );
-
-
-    const link =
-        prompt(
-            "Certificate link (optional):"
-        );
-
-
-    try {
-
-        await addDoc(
-            collection(
-                db,
-                "certificates"
-            ),
-            {
-
-                name:
-                    name.trim(),
-
-                issuer:
-                    issuer
-                        ? issuer.trim()
-                        : "",
-
-                year:
-                    year
-                        ? year.trim()
-                        : "",
-
-                link:
-                    link
-                        ? link.trim()
-                        : "",
-
-                createdBy:
-                    currentUser.uid,
-
-                createdAt:
-                    serverTimestamp()
-
-            }
-        );
-
-
-        alert(
-            "Certificate added successfully."
-        );
-
-
-        await loadCertificates();
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Add certificate error:",
-            error
-        );
-
-
-        alert(
-            "Failed to add certificate. Check Firestore permissions."
-        );
-
-    }
-
-}
-
-
-if (addCertificateButton) {
-
-    addCertificateButton.addEventListener(
-        "click",
-        addCertificate
-    );
-
-}
-
-
-if (emptyAddCertificateButton) {
-
-    emptyAddCertificateButton.addEventListener(
-        "click",
-        addCertificate
-    );
-
-}
-
-
-/* =========================================================
-   LOAD CERTIFICATES
-   ========================================================= */
-
-async function loadCertificates() {
 
     try {
 
@@ -1272,17 +768,13 @@ async function loadCertificates() {
             );
 
 
+        certificatesContainer.innerHTML = "";
+
+
         if (certificatesCount) {
 
             certificatesCount.textContent =
                 snapshot.size;
-
-        }
-
-
-        if (!certificatesContainer) {
-
-            return;
 
         }
 
@@ -1293,24 +785,94 @@ async function loadCertificates() {
 
                 <div class="empty-state">
 
-                    <div class="empty-icon">
-                        🏆
-                    </div>
+                    <h3>No Certificates Yet</h3>
+
+                    <p>
+                        Add your first certificate.
+                    </p>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        snapshot.forEach((item) => {
+
+            const data =
+                item.data();
+
+
+            const card =
+                document.createElement("div");
+
+            card.className =
+                "dashboard-card";
+
+
+            card.innerHTML = `
+
+                <div class="dashboard-card-content">
 
                     <h3>
-                        No Certificates Yet
+                        ${escapeHTML(
+                            data.name ||
+                            "Certificate"
+                        )}
                     </h3>
 
                     <p>
-                        Your certificates will appear here.
+                        ${escapeHTML(
+                            data.issuer ||
+                            ""
+                        )}
                     </p>
 
+                    <p>
+                        ${escapeHTML(
+                            data.year ||
+                            ""
+                        )}
+                    </p>
+
+                    ${
+                        data.link
+                        ?
+                        `
+                        <a
+                            href="${escapeAttribute(data.link)}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="project-link"
+                        >
+                            View Certificate
+                        </a>
+                        `
+                        :
+                        ""
+                    }
+
+                </div>
+
+                <div class="dashboard-card-actions">
+
                     <button
-                        type="button"
-                        class="primary-button"
-                        id="emptyAddCertificateButton"
+                        class="secondary-button"
+                        data-action="edit-certificate"
+                        data-id="${item.id}"
                     >
-                        Add Your First Certificate
+                        Edit
+                    </button>
+
+                    <button
+                        class="danger-button"
+                        data-action="delete-certificate"
+                        data-id="${item.id}"
+                    >
+                        Delete
                     </button>
 
                 </div>
@@ -1318,48 +880,15 @@ async function loadCertificates() {
             `;
 
 
-            document
-                .getElementById(
-                    "emptyAddCertificateButton"
-                )
-                ?.addEventListener(
-                    "click",
-                    addCertificate
-                );
+            certificatesContainer.appendChild(card);
+
+        });
 
 
-            return;
-
-        }
+        attachCertificateActions();
 
 
-        certificatesContainer.innerHTML = "";
-
-
-        snapshot.forEach(
-            (item) => {
-
-                const data =
-                    item.data();
-
-
-                const card =
-                    createCertificateCard(
-                        item.id,
-                        data
-                    );
-
-
-                certificatesContainer.appendChild(
-                    card
-                );
-
-            }
-        );
-
-    }
-
-    catch (error) {
+    } catch (error) {
 
         console.error(
             "Load certificates error:",
@@ -1372,169 +901,15 @@ async function loadCertificates() {
 
 
 /* =========================================================
-   CREATE CERTIFICATE CARD
+   Add Certificate
    ========================================================= */
 
-function createCertificateCard(
-    id,
-    data
-) {
-
-    const card =
-        document.createElement(
-            "div"
-        );
-
-
-    card.className =
-        "dashboard-card";
-
-
-    card.innerHTML = `
-
-        <div class="card-header">
-
-            <div>
-
-                <span class="section-label">
-                    CERTIFICATE
-                </span>
-
-                <h3>
-                    ${escapeHTML(
-                        data.name ||
-                        "Untitled Certificate"
-                    )}
-                </h3>
-
-            </div>
-
-        </div>
-
-
-        <p
-            style="
-                color: #94a3b8;
-                margin-bottom: 8px;
-            "
-        >
-            ${
-                escapeHTML(
-                    data.issuer ||
-                    "Issuing organization not specified"
-                )
-            }
-        </p>
-
-
-        <p
-            style="
-                color: #64748b;
-                margin-bottom: 18px;
-            "
-        >
-            ${
-                escapeHTML(
-                    data.year ||
-                    ""
-                )
-            }
-        </p>
-
-
-        <div
-            style="
-                display: flex;
-                gap: 10px;
-                flex-wrap: wrap;
-            "
-        >
-
-            ${
-                data.link
-                    ? `
-                        <a
-                            href="${escapeAttribute(data.link)}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="primary-button"
-                        >
-                            View Certificate
-                        </a>
-                    `
-                    : ""
-            }
-
-
-            <button
-                type="button"
-                class="secondary-button"
-                data-edit-certificate="${id}"
-            >
-                Edit
-            </button>
-
-
-            <button
-                type="button"
-                class="danger-button"
-                data-delete-certificate="${id}"
-            >
-                Delete
-            </button>
-
-        </div>
-
-    `;
-
-
-    card
-        .querySelector(
-            "[data-edit-certificate]"
-        )
-        .addEventListener(
-            "click",
-            () => editCertificate(
-                id,
-                data
-            )
-        );
-
-
-    card
-        .querySelector(
-            "[data-delete-certificate]"
-        )
-        .addEventListener(
-            "click",
-            () => deleteCertificate(
-                id
-            )
-        );
-
-
-    return card;
-
-}
-
-
-/* =========================================================
-   EDIT CERTIFICATE
-   ========================================================= */
-
-async function editCertificate(
-    id,
-    oldData
-) {
+async function addCertificate() {
 
     const name =
-        prompt(
-            "Certificate name:",
-            oldData.name || ""
-        );
+        prompt("اكتب اسم الشهادة:");
 
-
-    if (!name || !name.trim()) {
+    if (!name) {
 
         return;
 
@@ -1542,71 +917,319 @@ async function editCertificate(
 
 
     const issuer =
-        prompt(
-            "Issuing organization:",
-            oldData.issuer || ""
-        );
+        prompt("اكتب الجهة المانحة:");
+
+    if (issuer === null) {
+
+        return;
+
+    }
 
 
     const year =
-        prompt(
-            "Year:",
-            oldData.year || ""
-        );
+        prompt("اكتب سنة الحصول على الشهادة:");
+
+    if (year === null) {
+
+        return;
+
+    }
 
 
     const link =
-        prompt(
-            "Certificate link:",
-            oldData.link || ""
-        );
+        prompt("اكتب رابط الشهادة:");
+
+    if (link === null) {
+
+        return;
+
+    }
 
 
     try {
 
-        await updateDoc(
-            doc(
+        await addDoc(
+
+            collection(
                 db,
-                "certificates",
-                id
+                "certificates"
             ),
+
             {
 
                 name:
                     name.trim(),
 
                 issuer:
-                    issuer
-                        ? issuer.trim()
-                        : "",
+                    issuer.trim(),
 
                 year:
-                    year
-                        ? year.trim()
-                        : "",
+                    year.trim(),
 
                 link:
-                    link
-                        ? link.trim()
-                        : "",
+                    link.trim(),
+
+                createdAt:
+                    serverTimestamp(),
 
                 updatedAt:
                     serverTimestamp()
 
             }
+
         );
 
 
         alert(
-            "Certificate updated successfully."
+            "تمت إضافة الشهادة بنجاح ✅"
         );
 
 
         await loadCertificates();
 
+
+    } catch (error) {
+
+        console.error(
+            "Add certificate error:",
+            error
+        );
+
+
+        alert(
+            "فشل إضافة الشهادة:\n\n" +
+            error.message
+        );
+
     }
 
-    catch (error) {
+}
+
+
+/* =========================================================
+   Certificate Actions
+   ========================================================= */
+
+function attachCertificateActions() {
+
+    document
+        .querySelectorAll(
+            '[data-action="delete-certificate"]'
+        )
+        .forEach((button) => {
+
+            button.addEventListener(
+                "click",
+                async () => {
+
+                    const id =
+                        button.getAttribute(
+                            "data-id"
+                        );
+
+
+                    if (
+                        !confirm(
+                            "هل تريد حذف هذه الشهادة؟"
+                        )
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        await deleteDoc(
+
+                            doc(
+                                db,
+                                "certificates",
+                                id
+                            )
+
+                        );
+
+
+                        await loadCertificates();
+
+
+                    } catch (error) {
+
+                        console.error(
+                            "Delete certificate error:",
+                            error
+                        );
+
+
+                        alert(
+                            "فشل حذف الشهادة:\n\n" +
+                            error.message
+                        );
+
+                    }
+
+                }
+
+            );
+
+        });
+
+
+    document
+        .querySelectorAll(
+            '[data-action="edit-certificate"]'
+        )
+        .forEach((button) => {
+
+            button.addEventListener(
+                "click",
+                async () => {
+
+                    const id =
+                        button.getAttribute(
+                            "data-id"
+                        );
+
+
+                    await editCertificate(id);
+
+                }
+
+            );
+
+        });
+
+}
+
+
+/* =========================================================
+   Edit Certificate
+   ========================================================= */
+
+async function editCertificate(id) {
+
+    try {
+
+        const reference =
+            doc(
+                db,
+                "certificates",
+                id
+            );
+
+
+        const snapshot =
+            await getDoc(reference);
+
+
+        if (!snapshot.exists()) {
+
+            alert(
+                "الشهادة غير موجودة."
+            );
+
+            return;
+
+        }
+
+
+        const data =
+            snapshot.data();
+
+
+        const name =
+            prompt(
+                "اسم الشهادة:",
+                data.name || ""
+            );
+
+
+        if (name === null) {
+
+            return;
+
+        }
+
+
+        const issuer =
+            prompt(
+                "الجهة المانحة:",
+                data.issuer || ""
+            );
+
+
+        if (issuer === null) {
+
+            return;
+
+        }
+
+
+        const year =
+            prompt(
+                "السنة:",
+                data.year || ""
+            );
+
+
+        if (year === null) {
+
+            return;
+
+        }
+
+
+        const link =
+            prompt(
+                "رابط الشهادة:",
+                data.link || ""
+            );
+
+
+        if (link === null) {
+
+            return;
+
+        }
+
+
+        await updateDoc(
+
+            reference,
+
+            {
+
+                name:
+                    name.trim(),
+
+                issuer:
+                    issuer.trim(),
+
+                year:
+                    year.trim(),
+
+                link:
+                    link.trim(),
+
+                updatedAt:
+                    serverTimestamp()
+
+            }
+
+        );
+
+
+        alert(
+            "تم تعديل الشهادة بنجاح ✅"
+        );
+
+
+        await loadCertificates();
+
+
+    } catch (error) {
 
         console.error(
             "Edit certificate error:",
@@ -1615,58 +1238,8 @@ async function editCertificate(
 
 
         alert(
-            "Failed to update certificate."
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   DELETE CERTIFICATE
-   ========================================================= */
-
-async function deleteCertificate(id) {
-
-    const confirmed =
-        confirm(
-            "Delete this certificate?"
-        );
-
-
-    if (!confirmed) {
-
-        return;
-
-    }
-
-
-    try {
-
-        await deleteDoc(
-            doc(
-                db,
-                "certificates",
-                id
-            )
-        );
-
-
-        await loadCertificates();
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Delete certificate error:",
-            error
-        );
-
-
-        alert(
-            "Failed to delete certificate."
+            "فشل تعديل الشهادة:\n\n" +
+            error.message
         );
 
     }
@@ -1678,105 +1251,13 @@ async function deleteCertificate(id) {
    SKILLS
    ========================================================= */
 
-async function addSkill() {
+async function loadSkills() {
 
-    const name =
-        prompt(
-            "Skill name:"
-        );
-
-
-    if (!name || !name.trim()) {
+    if (!skillsContainer) {
 
         return;
-
     }
 
-
-    const level =
-        prompt(
-            "Skill level (e.g. Beginner, Intermediate, Advanced):"
-        );
-
-
-    try {
-
-        await addDoc(
-            collection(
-                db,
-                "skills"
-            ),
-            {
-
-                name:
-                    name.trim(),
-
-                level:
-                    level
-                        ? level.trim()
-                        : "",
-
-                createdBy:
-                    currentUser.uid,
-
-                createdAt:
-                    serverTimestamp()
-
-            }
-        );
-
-
-        alert(
-            "Skill added successfully."
-        );
-
-
-        await loadSkills();
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Add skill error:",
-            error
-        );
-
-
-        alert(
-            "Failed to add skill. Check Firestore permissions."
-        );
-
-    }
-
-}
-
-
-if (addSkillButton) {
-
-    addSkillButton.addEventListener(
-        "click",
-        addSkill
-    );
-
-}
-
-
-if (emptyAddSkillButton) {
-
-    emptyAddSkillButton.addEventListener(
-        "click",
-        addSkill
-    );
-
-}
-
-
-/* =========================================================
-   LOAD SKILLS
-   ========================================================= */
-
-async function loadSkills() {
 
     try {
 
@@ -1789,17 +1270,13 @@ async function loadSkills() {
             );
 
 
+        skillsContainer.innerHTML = "";
+
+
         if (skillsCount) {
 
             skillsCount.textContent =
                 snapshot.size;
-
-        }
-
-
-        if (!skillsContainer) {
-
-            return;
 
         }
 
@@ -1810,24 +1287,71 @@ async function loadSkills() {
 
                 <div class="empty-state">
 
-                    <div class="empty-icon">
-                        ⚙
-                    </div>
+                    <h3>No Skills Yet</h3>
+
+                    <p>
+                        Add your first skill.
+                    </p>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        snapshot.forEach((item) => {
+
+            const data =
+                item.data();
+
+
+            const card =
+                document.createElement("div");
+
+            card.className =
+                "dashboard-card";
+
+
+            card.innerHTML = `
+
+                <div class="dashboard-card-content">
 
                     <h3>
-                        No Skills Yet
+                        ${escapeHTML(
+                            data.name ||
+                            "Skill"
+                        )}
                     </h3>
 
                     <p>
-                        Your skills will appear here.
+                        Level:
+                        ${escapeHTML(
+                            data.level ||
+                            ""
+                        )}
                     </p>
 
+                </div>
+
+                <div class="dashboard-card-actions">
+
                     <button
-                        type="button"
-                        class="primary-button"
-                        id="emptyAddSkillButton"
+                        class="secondary-button"
+                        data-action="edit-skill"
+                        data-id="${item.id}"
                     >
-                        Add Your First Skill
+                        Edit
+                    </button>
+
+                    <button
+                        class="danger-button"
+                        data-action="delete-skill"
+                        data-id="${item.id}"
+                    >
+                        Delete
                     </button>
 
                 </div>
@@ -1835,48 +1359,15 @@ async function loadSkills() {
             `;
 
 
-            document
-                .getElementById(
-                    "emptyAddSkillButton"
-                )
-                ?.addEventListener(
-                    "click",
-                    addSkill
-                );
+            skillsContainer.appendChild(card);
+
+        });
 
 
-            return;
-
-        }
+        attachSkillActions();
 
 
-        skillsContainer.innerHTML = "";
-
-
-        snapshot.forEach(
-            (item) => {
-
-                const data =
-                    item.data();
-
-
-                const card =
-                    createSkillCard(
-                        item.id,
-                        data
-                    );
-
-
-                skillsContainer.appendChild(
-                    card
-                );
-
-            }
-        );
-
-    }
-
-    catch (error) {
+    } catch (error) {
 
         console.error(
             "Load skills error:",
@@ -1889,139 +1380,15 @@ async function loadSkills() {
 
 
 /* =========================================================
-   CREATE SKILL CARD
+   Add Skill
    ========================================================= */
 
-function createSkillCard(
-    id,
-    data
-) {
-
-    const card =
-        document.createElement(
-            "div"
-        );
-
-
-    card.className =
-        "dashboard-card";
-
-
-    card.innerHTML = `
-
-        <div class="card-header">
-
-            <div>
-
-                <span class="section-label">
-                    SKILL
-                </span>
-
-                <h3>
-                    ${escapeHTML(
-                        data.name ||
-                        "Unnamed Skill"
-                    )}
-                </h3>
-
-            </div>
-
-        </div>
-
-
-        <p
-            style="
-                color: #94a3b8;
-                margin-bottom: 18px;
-            "
-        >
-            Level:
-            ${
-                escapeHTML(
-                    data.level ||
-                    "Not specified"
-                )
-            }
-        </p>
-
-
-        <div
-            style="
-                display: flex;
-                gap: 10px;
-                flex-wrap: wrap;
-            "
-        >
-
-            <button
-                type="button"
-                class="secondary-button"
-                data-edit-skill="${id}"
-            >
-                Edit
-            </button>
-
-
-            <button
-                type="button"
-                class="danger-button"
-                data-delete-skill="${id}"
-            >
-                Delete
-            </button>
-
-        </div>
-
-    `;
-
-
-    card
-        .querySelector(
-            "[data-edit-skill]"
-        )
-        .addEventListener(
-            "click",
-            () => editSkill(
-                id,
-                data
-            )
-        );
-
-
-    card
-        .querySelector(
-            "[data-delete-skill]"
-        )
-        .addEventListener(
-            "click",
-            () => deleteSkill(
-                id
-            )
-        );
-
-
-    return card;
-
-}
-
-
-/* =========================================================
-   EDIT SKILL
-   ========================================================= */
-
-async function editSkill(
-    id,
-    oldData
-) {
+async function addSkill() {
 
     const name =
-        prompt(
-            "Skill name:",
-            oldData.name || ""
-        );
+        prompt("اكتب اسم المهارة:");
 
-
-    if (!name || !name.trim()) {
+    if (!name) {
 
         return;
 
@@ -2030,75 +1397,11 @@ async function editSkill(
 
     const level =
         prompt(
-            "Skill level:",
-            oldData.level || ""
+            "اكتب مستوى المهارة، مثال: Beginner / Intermediate / Advanced:"
         );
 
 
-    try {
-
-        await updateDoc(
-            doc(
-                db,
-                "skills",
-                id
-            ),
-            {
-
-                name:
-                    name.trim(),
-
-                level:
-                    level
-                        ? level.trim()
-                        : "",
-
-                updatedAt:
-                    serverTimestamp()
-
-            }
-        );
-
-
-        alert(
-            "Skill updated successfully."
-        );
-
-
-        await loadSkills();
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Edit skill error:",
-            error
-        );
-
-
-        alert(
-            "Failed to update skill."
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   DELETE SKILL
-   ========================================================= */
-
-async function deleteSkill(id) {
-
-    const confirmed =
-        confirm(
-            "Delete this skill?"
-        );
-
-
-    if (!confirmed) {
+    if (level === null) {
 
         return;
 
@@ -2107,24 +1410,258 @@ async function deleteSkill(id) {
 
     try {
 
-        await deleteDoc(
-            doc(
+        await addDoc(
+
+            collection(
                 db,
-                "skills",
-                id
-            )
+                "skills"
+            ),
+
+            {
+
+                name:
+                    name.trim(),
+
+                level:
+                    level.trim(),
+
+                createdAt:
+                    serverTimestamp(),
+
+                updatedAt:
+                    serverTimestamp()
+
+            }
+
+        );
+
+
+        alert(
+            "تمت إضافة المهارة بنجاح ✅"
         );
 
 
         await loadSkills();
 
-    }
 
-    catch (error) {
+    } catch (error) {
 
         console.error(
-            "Delete skill error:",
+            "Add skill error:",
             error
+        );
+
+
+        alert(
+            "فشل إضافة المهارة:\n\n" +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   Skill Actions
+   ========================================================= */
+
+function attachSkillActions() {
+
+    document
+        .querySelectorAll(
+            '[data-action="delete-skill"]'
+        )
+        .forEach((button) => {
+
+            button.addEventListener(
+                "click",
+                async () => {
+
+                    const id =
+                        button.getAttribute(
+                            "data-id"
+                        );
+
+
+                    if (
+                        !confirm(
+                            "هل تريد حذف هذه المهارة؟"
+                        )
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        await deleteDoc(
+
+                            doc(
+                                db,
+                                "skills",
+                                id
+                            )
+
+                        );
+
+
+                        await loadSkills();
+
+
+                    } catch (error) {
+
+                        console.error(
+                            "Delete skill error:",
+                            error
+                        );
+
+
+                        alert(
+                            "فشل حذف المهارة:\n\n" +
+                            error.message
+                        );
+
+                    }
+
+                }
+
+            );
+
+        });
+
+
+    document
+        .querySelectorAll(
+            '[data-action="edit-skill"]'
+        )
+        .forEach((button) => {
+
+            button.addEventListener(
+                "click",
+                async () => {
+
+                    const id =
+                        button.getAttribute(
+                            "data-id"
+                        );
+
+
+                    await editSkill(id);
+
+                }
+
+            );
+
+        });
+
+}
+
+
+/* =========================================================
+   Edit Skill
+   ========================================================= */
+
+async function editSkill(id) {
+
+    try {
+
+        const reference =
+            doc(
+                db,
+                "skills",
+                id
+            );
+
+
+        const snapshot =
+            await getDoc(reference);
+
+
+        if (!snapshot.exists()) {
+
+            alert(
+                "المهارة غير موجودة."
+            );
+
+            return;
+
+        }
+
+
+        const data =
+            snapshot.data();
+
+
+        const name =
+            prompt(
+                "اسم المهارة:",
+                data.name || ""
+            );
+
+
+        if (name === null) {
+
+            return;
+
+        }
+
+
+        const level =
+            prompt(
+                "مستوى المهارة:",
+                data.level || ""
+            );
+
+
+        if (level === null) {
+
+            return;
+
+        }
+
+
+        await updateDoc(
+
+            reference,
+
+            {
+
+                name:
+                    name.trim(),
+
+                level:
+                    level.trim(),
+
+                updatedAt:
+                    serverTimestamp()
+
+            }
+
+        );
+
+
+        alert(
+            "تم تعديل المهارة بنجاح ✅"
+        );
+
+
+        await loadSkills();
+
+
+    } catch (error) {
+
+        console.error(
+            "Edit skill error:",
+            error
+        );
+
+
+        alert(
+            "فشل تعديل المهارة:\n\n" +
+            error.message
         );
 
     }
@@ -2140,7 +1677,7 @@ async function loadProfile() {
 
     try {
 
-        const profileReference =
+        const reference =
             doc(
                 db,
                 "profile",
@@ -2148,13 +1685,11 @@ async function loadProfile() {
             );
 
 
-        const profileSnapshot =
-            await getDoc(
-                profileReference
-            );
+        const snapshot =
+            await getDoc(reference);
 
 
-        if (!profileSnapshot.exists()) {
+        if (!snapshot.exists()) {
 
             return;
 
@@ -2162,7 +1697,7 @@ async function loadProfile() {
 
 
         const data =
-            profileSnapshot.data();
+            snapshot.data();
 
 
         if (profileName) {
@@ -2188,9 +1723,8 @@ async function loadProfile() {
 
         }
 
-    }
 
-    catch (error) {
+    } catch (error) {
 
         console.error(
             "Load profile error:",
@@ -2203,8 +1737,142 @@ async function loadProfile() {
 
 
 /* =========================================================
-   SAVE PROFILE
+   Save Profile
    ========================================================= */
+
+async function saveProfile() {
+
+    try {
+
+        await setDoc(
+
+            doc(
+                db,
+                "profile",
+                "main"
+            ),
+
+            {
+
+                name:
+                    profileName
+                    ?
+                    profileName.value.trim()
+                    :
+                    "",
+
+                title:
+                    profileTitle
+                    ?
+                    profileTitle.value.trim()
+                    :
+                    "",
+
+                bio:
+                    profileBio
+                    ?
+                    profileBio.value.trim()
+                    :
+                    "",
+
+                updatedAt:
+                    serverTimestamp()
+
+            },
+
+            {
+                merge: true
+            }
+
+        );
+
+
+        alert(
+            "تم حفظ البروفايل بنجاح ✅"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Save profile error:",
+            error
+        );
+
+
+        alert(
+            "فشل حفظ البروفايل:\n\n" +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   Button Events
+   ========================================================= */
+
+if (addProjectButton) {
+
+    addProjectButton.addEventListener(
+        "click",
+        addProject
+    );
+
+}
+
+
+if (emptyAddProjectButton) {
+
+    emptyAddProjectButton.addEventListener(
+        "click",
+        addProject
+    );
+
+}
+
+
+if (addCertificateButton) {
+
+    addCertificateButton.addEventListener(
+        "click",
+        addCertificate
+    );
+
+}
+
+
+if (emptyAddCertificateButton) {
+
+    emptyAddCertificateButton.addEventListener(
+        "click",
+        addCertificate
+    );
+
+}
+
+
+if (addSkillButton) {
+
+    addSkillButton.addEventListener(
+        "click",
+        addSkill
+    );
+
+}
+
+
+if (emptyAddSkillButton) {
+
+    emptyAddSkillButton.addEventListener(
+        "click",
+        addSkill
+    );
+
+}
+
 
 if (saveProfileButton) {
 
@@ -2216,133 +1884,34 @@ if (saveProfileButton) {
 }
 
 
-async function saveProfile() {
-
-    if (!currentUser) {
-
-        alert(
-            "You are not authenticated."
-        );
-
-        return;
-
-    }
-
-
-    const name =
-        profileName.value.trim();
-
-    const title =
-        profileTitle.value.trim();
-
-    const bio =
-        profileBio.value.trim();
-
-
-    if (!name) {
-
-        alert(
-            "Please enter your name."
-        );
-
-        return;
-
-    }
-
-
-    try {
-
-        await setDoc(
-            doc(
-                db,
-                "profile",
-                "main"
-            ),
-            {
-
-                name,
-
-                title,
-
-                bio,
-
-                updatedBy:
-                    currentUser.uid,
-
-                updatedAt:
-                    serverTimestamp()
-
-            }
-        );
-
-
-        alert(
-            "Profile saved successfully."
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Save profile error:",
-            error
-        );
-
-
-        alert(
-            "Failed to save profile."
-        );
-
-    }
-
-}
-
-
 /* =========================================================
-   LOAD ALL DATA
-   ========================================================= */
-
-async function loadAllData() {
-
-    updateAdminInformation(
-        currentUser
-    );
-
-
-    await Promise.all([
-        loadProjects(),
-        loadCertificates(),
-        loadSkills(),
-        loadProfile()
-    ]);
-
-}
-
-
-/* =========================================================
-   HTML SECURITY
+   Utility - Escape HTML
    ========================================================= */
 
 function escapeHTML(value) {
 
     return String(value)
+
         .replace(
             /&/g,
             "&amp;"
         )
+
         .replace(
             /</g,
             "&lt;"
         )
+
         .replace(
             />/g,
             "&gt;"
         )
+
         .replace(
             /"/g,
             "&quot;"
         )
+
         .replace(
             /'/g,
             "&#039;"
@@ -2350,87 +1919,45 @@ function escapeHTML(value) {
 
 }
 
+
+/* =========================================================
+   Utility - Escape Attribute
+   ========================================================= */
 
 function escapeAttribute(value) {
 
     return String(value)
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
         .replace(
             /"/g,
             "&quot;"
         )
+
         .replace(
             /'/g,
             "&#039;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
         );
 
 }
 
 
 /* =========================================================
-   INITIAL SECTION
+   Initial Header
    ========================================================= */
 
-function initializeSection() {
-
-    const hash =
-        window.location.hash
-            .replace(
-                "#",
-                ""
-            )
-            .trim();
-
-
-    if (
-        hash &&
-        sectionData[hash]
-    ) {
-
-        showSection(hash);
-
-    }
-
-    else {
-
-        showSection(
-            "dashboard"
-        );
-
-    }
-
-}
-
-
-window.addEventListener(
-    "hashchange",
-    () => {
-
-        const sectionName =
-            window.location.hash
-                .replace(
-                    "#",
-                    ""
-                )
-                .trim();
-
-
-        if (
-            sectionName &&
-            sectionData[sectionName]
-        ) {
-
-            showSection(
-                sectionName
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   START
-   ========================================================= */
-
-initializeSection();
+updatePageHeader("dashboard");
